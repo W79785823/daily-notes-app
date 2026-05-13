@@ -172,6 +172,32 @@ input:focus, select:focus, textarea:focus { border-color: rgba(47,106,79,.56); b
 .announcementItem strong { font-size: 15px; }
 .announcementTitleRow span { padding: 4px 8px; border-radius: 999px; color: #7a4517; background: #ffe2a7; font-size: 11px; font-weight: 950; }
 .announcementItem p { margin: 8px 0; color: #65736b; line-height: 1.55; font-size: 13px; }
+.pageFooter {
+  display: flex;
+  justify-content: center;
+  padding: 28px 0 8px;
+  text-align: center;
+}
+.pageFooter small {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: #839089;
+  background: rgba(255,255,255,.46);
+  border: 1px solid rgba(44,74,62,.08);
+  font-size: 12px;
+  font-weight: 850;
+}
+@media (max-width: 680px) {
+  .pageFooter {
+    padding: 18px 0 calc(70px + env(safe-area-inset-bottom));
+  }
+  .pageFooter small {
+    max-width: calc(100% - 24px);
+  }
+}
 .announcementItem footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .announcementItem small { color: #8b958f; font-size: 12px; }
 .linkDangerButton { border: 0; border-radius: 999px; padding: 6px 10px; color: #b9473d; background: #fde9e5; font-size: 12px; font-weight: 950; cursor: pointer; }

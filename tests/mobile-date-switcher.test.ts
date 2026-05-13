@@ -26,4 +26,11 @@ describe('手机首页日期切换', () => {
     expect(baseCss).toContain('.mobileTodayLink');
     expect(mobileCss).toContain('.mobileDateSwitcher');
   });
+
+  it('日历选中其他日期后，状态筛选应基于当前 search，不能回退到页面初始日期', () => {
+    const panel = read('src/components/task-focus-panel.tsx');
+
+    expect(panel).toContain('const nextSearch = buildSearch(search, next);');
+    expect(panel).not.toContain('const nextSearch = buildSearch(initialSearch, next);');
+  });
 });

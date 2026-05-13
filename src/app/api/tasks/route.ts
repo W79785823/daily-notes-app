@@ -61,6 +61,9 @@ export async function GET(request: NextRequest) {
       ...task,
       createdAt: task.createdAt.toISOString(),
       completedAt: task.completedAt ? task.completedAt.toISOString() : null,
+      canComplete: canActOnTask(user, task, 'complete'),
+      canDelete: canActOnTask(user, task, 'delete'),
+      canEdit: canActOnTask(user, task, 'edit'),
     })),
   });
 }

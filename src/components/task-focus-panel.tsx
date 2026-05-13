@@ -34,6 +34,10 @@ function buildSearch(baseSearch: string, status: StatusView) {
   return query ? `?${query}` : '';
 }
 
+function notifyTaskChanged() {
+  window.dispatchEvent(new CustomEvent('daily-notes:task-changed'));
+}
+
 function taskFromApi(task: Record<string, any>, fallback?: PanelTask, currentUserId?: string): PanelTask {
   return {
     id: String(task.id),
@@ -188,7 +192,7 @@ export function TaskFocusPanel({
     setTransitionClass(leavingClass);
     window.setTimeout(() => {
       setView(next);
-      const nextSearch = buildSearch(initialSearch, next);
+      const nextSearch = buildSearch(search, next);
       setSearch(nextSearch);
       window.history.replaceState({}, '', `${window.location.pathname}${nextSearch}`);
       void refreshTasks(nextSearch, next);
@@ -226,6 +230,7 @@ export function TaskFocusPanel({
       const updated = taskFromApi(payload.task || {}, { ...task, title, note: editDraft.note, date: editDraft.date, priority: editDraft.priority, assigneeId: editDraft.assigneeId || currentUserId }, currentUserId);
       setLocalTasks((items) => items.map((item) => (item.id === task.id ? updated : item)));
       setLocalOverdueTasks((items) => items.map((item) => (item.id === task.id ? updated : item)));
+      notifyTaskChanged();
       setEditingTaskId(null);
       setInlineMessage('事项已更新，当前位置已保留。');
     } catch (error) {
@@ -256,6 +261,7 @@ export function TaskFocusPanel({
         if (nextCompleted) return items.filter((item) => item.id !== task.id);
         return items.map((item) => (item.id === task.id ? updated : item));
       });
+      notifyTaskChanged();
     } catch (error) {
       setInlineMessage(error instanceof Error ? error.message : '操作失败，请稍后重试。');
     } finally {
@@ -275,6 +281,7 @@ export function TaskFocusPanel({
       if (!response.ok) throw new Error(payload?.error || '删除失败');
       setLocalTasks((items) => items.filter((item) => item.id !== taskId));
       setLocalOverdueTasks((items) => items.filter((item) => item.id !== taskId));
+      notifyTaskChanged();
       setInlineMessage('事项已删除，当前位置已保留。');
     } catch (error) {
       setInlineMessage(error instanceof Error ? error.message : '删除失败，请稍后重试。');

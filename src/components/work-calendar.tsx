@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '@/lib/cn';
 import { beijingDateKey } from '@/lib/beijing-date';
 
@@ -82,6 +82,14 @@ export function WorkCalendar({ initialDate, initialStats, initialMonthTotal, ini
       if (activeRequestRef.current === requestId) setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const handleTaskChanged = () => {
+      void loadMonth(monthDate);
+    };
+    window.addEventListener('daily-notes:task-changed', handleTaskChanged);
+    return () => window.removeEventListener('daily-notes:task-changed', handleTaskChanged);
+  }, [monthDate, assigneeId, priority, keyword]);
 
   const changeMonth = (offset: number) => {
     const next = addMonths(monthDate, offset);

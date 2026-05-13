@@ -32,6 +32,20 @@ export function TaskCreateForm({
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isDesktop, setIsDesktop] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(date);
+
+  useEffect(() => {
+    setSelectedDate(date);
+  }, [date]);
+
+  useEffect(() => {
+    const handleDateSelect = (event: Event) => {
+      const nextDate = (event as CustomEvent<{ date?: string }>).detail?.date;
+      if (nextDate) setSelectedDate(nextDate);
+    };
+    window.addEventListener('daily-notes:select-date', handleDateSelect);
+    return () => window.removeEventListener('daily-notes:select-date', handleDateSelect);
+  }, []);
 
   useEffect(() => {
     const query = window.matchMedia('(min-width: 681px)');
@@ -57,7 +71,7 @@ export function TaskCreateForm({
           title: String(formData.get('title') || ''),
           note: String(formData.get('note') || ''),
           priority: String(formData.get('priority') || 'NORMAL'),
-          date: String(formData.get('date') || date),
+          date: String(formData.get('date') || selectedDate),
           assigneeId: String(formData.get('assigneeId') || currentUserId),
         }),
       });
@@ -67,7 +81,7 @@ export function TaskCreateForm({
       const dateInput = form.elements.namedItem('date') as HTMLInputElement | null;
       const assignee = form.elements.namedItem('assigneeId') as HTMLSelectElement | null;
       const priority = form.elements.namedItem('priority') as HTMLSelectElement | null;
-      if (dateInput) dateInput.value = date;
+      if (dateInput) dateInput.value = selectedDate;
       if (assignee) assignee.value = currentUserId;
       if (priority) priority.value = 'NORMAL';
       setMessage('事项已创建，当前位置已保留。');
@@ -91,7 +105,7 @@ export function TaskCreateForm({
           <input name="title" placeholder="事项标题" required />
           <textarea name="note" placeholder="备注" />
           <div className="twoCols">
-            <label>日期<input name="date" type="date" defaultValue={date} required /></label>
+            <label>日期<input name="date" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} required /></label>
             <label>负责人<select name="assigneeId" defaultValue={currentUserId}>{assignableUsers.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></label>
           </div>
           <label>优先级<select name="priority" defaultValue="NORMAL">{priorityOptions.map((item) => <option key={item.value} value={item.value}>{item.hint ? `${item.label} · ${item.hint}` : item.label}</option>)}</select></label>

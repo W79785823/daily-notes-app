@@ -13,4 +13,12 @@ describe('任务接口北京时间', () => {
     expect(route).toContain('const todayKey = beijingDateKey();');
     expect(route).not.toContain("const todayKey = new Date().toISOString().slice(0, 10);");
   });
+
+  it('任务列表接口返回当前用户对事项的操作权限，避免日历切换后编辑/删除按钮消失', () => {
+    const route = read('src/app/api/tasks/route.ts');
+
+    expect(route).toContain("canComplete: canActOnTask(user, task, 'complete')");
+    expect(route).toContain("canDelete: canActOnTask(user, task, 'delete')");
+    expect(route).toContain("canEdit: canActOnTask(user, task, 'edit')");
+  });
 });
