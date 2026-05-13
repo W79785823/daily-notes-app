@@ -43,103 +43,120 @@ http://localhost:3000
 docker compose up
 ```
 
-## 生产认证建议
-
-开发环境可按需要临时开启：
-
-```bash
-AUTH_ALLOW_DEV_USER_HEADER="true"
-```
-
-生产环境必须关闭开发身份头，并设置高强度随机 Session 密钥：
-
-```bash
-AUTH_ALLOW_DEV_USER_HEADER="false"
-SESSION_SECRET="换成足够长的随机字符串"
-```
-
-这样 JSON API 只接受正常登录后的会话，不再接受 `x-user-id` 或 URL 里的 `userId` 调试身份。
-
-## 提醒生成器
-
-```bash
-npm run reminder:daily
-```
-
-详细说明见：`docs/reminders.md`。
-
-## 测试与构建
-
-```bash
-npm test
-npm run build
-```
-
 ## 生产部署
 
 项目支持两种常见部署方式：
 
-- **Ubuntu 服务器直装**：适合你自己管理 Node.js、systemd、Nginx 的场景
-- **Docker / Docker Compose**：适合快速迁移、环境一致性更强的场景
+- **Ubuntu 服务器直装**：适合你自己管理 Node.js、systemd、Nginx 的场景。
+- **Docker / Docker Compose**：适合快速迁移，PostgreSQL 和 Web 服务由 Compose 统一管理。
+
+### 部署前准备
+
+无论使用哪种方式，都需要先准备：
+
+- 一台 Ubuntu 服务器，建议 Ubuntu 22.04 或 24.04。
+- 一个可访问 GitHub 私有仓库的账号或 Token。
+- 一个域名，可选；如果不用域名，可先用 `http://服务器IP:3000` 测试。
+- 一份生产环境变量文件 `.env`，不要把真实 `.env` 提交到 GitHub。
+
+关键环境变量：
+
+```bash
+DATABASE_URL="postgresql://用户名:密码@数据库地址:5432/数据库名?schema=public"
+SESSION_SECRET="至少32位以上的随机字符串"
+AUTH_ALLOW_DEV_USER_HEADER="false"
+```
+
+生成随机 `SESSION_SECRET` 示例：
+
+```bash
+openssl rand -base64 48
+```
+
+> 生产环境必须保持 `AUTH_ALLOW_DEV_USER_HEADER="false"`，否则 API 可能接受调试身份头。
+
+---
 
 ### 方式一：Ubuntu 服务器直装
 
-#### 1. 安装运行环境
+适合已经有 PostgreSQL、Nginx、systemd 管理经验的服务器。
 
-在 Ubuntu 上准备：
+#### 1. 安装系统依赖
 
-- Node.js 22+
-- npm
-- PostgreSQL 16+
-- 可选：Nginx、systemd
+```bash
+sudo apt update
+sudo apt install -y git curl ca-certificates build-essential openssl
+```
+
+安装 Node.js 22 示例：
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs
+node -v
+npm -v
+```
+
+如果数据库也放在同一台服务器：
+
+```bash
+sudo apt install -y postgresql postgresql-contrib
+```
 
 #### 2. 拉取代码
 
 ```bash
+sudo mkdir -p /data
+sudo chown -R "$USER":"$USER" /data
 cd /data
-sudo git clone https://github.com/W79785823/daily-notes-app.git
+git clone https://github.com/W79785823/daily-notes-app.git
 cd daily-notes-app
 ```
 
-如果已经有目录，就直接：
+以后更新代码：
 
 ```bash
 cd /data/daily-notes-app
-sudo git pull
+git pull origin main
 ```
 
-#### 3. 配置环境变量
-
-复制示例配置并修改：
+#### 3. 配置 `.env`
 
 ```bash
 cp .env.example .env
+nano .env
 ```
 
-至少要改好：
+把里面的 `DATABASE_URL`、`SESSION_SECRET`、`AUTH_ALLOW_DEV_USER_HEADER` 改成生产值。
 
-- `DATABASE_URL`
-- `SESSION_SECRET`
-- `AUTH_ALLOW_DEV_USER_HEADER=false`
-
-#### 4. 安装依赖并生成 Prisma 客户端
+#### 4. 安装依赖和生成 Prisma 客户端
 
 ```bash
-npm install
+npm ci
 npm run db:generate
 ```
 
-#### 5. 准备数据库
+如果没有 `package-lock.json` 或依赖需要重新解析，可用：
 
-如果是新库，先初始化表结构：
+```bash
+npm install
+```
+
+#### 5. 初始化或迁移数据库
+
+新数据库首次部署可以执行：
 
 ```bash
 npx prisma db push
 ```
 
-如果你后续使用迁移方式，建议按 `docs/database-migrations.md` 里的流程执行。
+已有生产库或后续结构变更，优先按迁移文档执行：
 
-#### 6. 先做自检
+```bash
+docs/database-migrations.md
+```
+
+#### 6. 构建和自检
 
 ```bash
 npm test
@@ -149,74 +166,184 @@ npm run check:prod
 
 #### 7. 启动服务
 
-开发态可直接：
+临时测试：
 
 ```bash
-npm run dev
+npm run start
 ```
 
-生产环境建议使用 systemd 管理，启动脚本见：
+生产建议使用 systemd 管理，例如创建：
+
+```bash
+sudo nano /etc/systemd/system/daily-notes-app.service
+```
+
+示例内容：
+
+```ini
+[Unit]
+Description=Daily Notes App
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/data/daily-notes-app
+EnvironmentFile=/data/daily-notes-app/.env
+ExecStart=/usr/bin/npm run start
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+启用并启动：
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable daily-notes-app
+sudo systemctl start daily-notes-app
+sudo systemctl status daily-notes-app --no-pager
+```
+
+查看日志：
+
+```bash
+journalctl -u daily-notes-app -f
+```
+
+#### 8. 配置 Nginx 反向代理，可选
+
+如果要绑定域名，把 Nginx 反代到本地 `3000` 端口，并开启 HTTPS。
+
+最小反代示例：
+
+```nginx
+server {
+    listen 80;
+    server_name 你的域名;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+#### 9. 后续更新
+
+```bash
+cd /data/daily-notes-app
+git pull origin main
+npm ci
+npm run db:generate
+npm test
+npm run build
+sudo systemctl restart daily-notes-app
+```
+
+当前服务器也可以使用封装脚本：
 
 ```bash
 npm run deploy:prod
 ```
 
-这个脚本会执行：
-
-- 测试
-- 构建
-- 生产环境检查
-- 重启服务
-- 健康检查
-
-#### 8. 配置反向代理
-
-如果你要挂域名，建议用 Nginx 反代到本地 `3000` 端口，并开启 HTTPS。
+脚本会执行测试、构建、生产环境检查、重启服务和基础访问检查。正式使用前请确认脚本里的 `APP_DIR`、`SERVICE`、`BASE_URL` 是否符合当前服务器。
 
 ---
 
 ### 方式二：Docker / Docker Compose
 
+适合新服务器快速部署，数据库和应用由 Compose 统一启动。
+
 #### 1. 安装 Docker
 
-Ubuntu 上先安装：
+```bash
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg git
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
 
-- Docker Engine
-- Docker Compose 插件
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo docker version
+sudo docker compose version
+```
+
+可选：允许当前用户直接运行 Docker：
+
+```bash
+sudo usermod -aG docker "$USER"
+# 重新登录 SSH 后生效
+```
 
 #### 2. 拉取代码
 
 ```bash
+sudo mkdir -p /data
+sudo chown -R "$USER":"$USER" /data
 cd /data
-sudo git clone https://github.com/W79785823/daily-notes-app.git
+git clone https://github.com/W79785823/daily-notes-app.git
 cd daily-notes-app
 ```
 
-#### 3. 配置环境变量
-
-同样先复制：
+#### 3. 配置 `.env`
 
 ```bash
 cp .env.example .env
+nano .env
 ```
 
-然后把 `DATABASE_URL`、`SESSION_SECRET` 等改成正式值。
+Docker Compose 内部数据库地址通常使用服务名 `postgres`，示例：
 
-#### 4. 启动 PostgreSQL 和 Web
+```bash
+DATABASE_URL="postgresql://daily_notes:daily_notes_dev@postgres:5432/daily_notes?schema=public"
+SESSION_SECRET="至少32位以上的随机字符串"
+AUTH_ALLOW_DEV_USER_HEADER="false"
+```
+
+如果用于正式生产，请把 `docker-compose.yml` 里的数据库密码和 `.env` 里的 `DATABASE_URL` 密码一起改成强密码。
+
+#### 4. 启动服务
+
+开发/快速部署：
 
 ```bash
 docker compose up -d
 ```
 
-如果只想先启动数据库：
+只启动数据库：
 
 ```bash
 docker compose up -d postgres
 ```
 
+查看状态：
+
+```bash
+docker compose ps
+```
+
+查看日志：
+
+```bash
+docker compose logs -f web
+```
+
 #### 5. 初始化数据库
 
-首次启动后执行：
+如果使用当前 `docker-compose.yml`，`web` 服务启动时会执行 `npx prisma db push`。
+
+如果你只启动了数据库，想在宿主机手动初始化：
 
 ```bash
 npm install
@@ -224,39 +351,56 @@ npm run db:generate
 npx prisma db push
 ```
 
-#### 6. 验证
+#### 6. 验证访问
 
-```bash
-npm test
-npm run build
-```
-
-#### 7. 访问
-
-默认访问：
+默认端口：
 
 ```text
 http://服务器IP:3000
 ```
 
+本机检查：
+
+```bash
+curl -I http://127.0.0.1:3000
+```
+
+#### 7. 后续更新
+
+```bash
+cd /data/daily-notes-app
+git pull origin main
+docker compose down
+docker compose up -d --build
+```
+
+如果只改了应用代码，也可以：
+
+```bash
+docker compose restart web
+```
+
 ---
 
-### 生产认证建议
+### 生产上线检查
 
-开发环境可按需要临时开启：
-
-```bash
-AUTH_ALLOW_DEV_USER_HEADER="true"
-```
-
-生产环境必须关闭开发身份头，并设置高强度随机 Session 密钥：
+上线或迁移到新服务器后，建议检查：
 
 ```bash
-AUTH_ALLOW_DEV_USER_HEADER="false"
-SESSION_SECRET="换成足够长的随机字符串"
+npm test
+npm run build
+npm run check:prod
 ```
 
-这样 JSON API 只接受正常登录后的会话，不再接受 `x-user-id` 或 URL 里的 `userId` 调试身份。
+如果使用 Docker 且宿主机没有安装 Node.js，可进入容器或临时用 Node 镜像执行检查。
+
+确认事项：
+
+- `.env` 已配置生产数据库和强 `SESSION_SECRET`。
+- `AUTH_ALLOW_DEV_USER_HEADER=false`。
+- PostgreSQL 数据卷已持久化，不要把生产数据库放在临时容器文件系统里。
+- 如果开放公网访问，建议使用 Nginx + HTTPS。
+- 数据库变更和备份策略见 `docs/database-migrations.md`。
 
 ## 提醒生成器
 
@@ -272,13 +416,3 @@ npm run reminder:daily
 npm test
 npm run build
 ```
-
-## 生产部署
-
-当前服务器生产部署脚本：
-
-```bash
-npm run deploy:prod
-```
-
-部署前请确认生产环境变量、数据库连接和备份策略。数据库变更说明见：`docs/database-migrations.md`。
