@@ -77,6 +77,204 @@ npm run build
 
 ## 生产部署
 
+项目支持两种常见部署方式：
+
+- **Ubuntu 服务器直装**：适合你自己管理 Node.js、systemd、Nginx 的场景
+- **Docker / Docker Compose**：适合快速迁移、环境一致性更强的场景
+
+### 方式一：Ubuntu 服务器直装
+
+#### 1. 安装运行环境
+
+在 Ubuntu 上准备：
+
+- Node.js 22+
+- npm
+- PostgreSQL 16+
+- 可选：Nginx、systemd
+
+#### 2. 拉取代码
+
+```bash
+cd /data
+sudo git clone https://github.com/W79785823/daily-notes-app.git
+cd daily-notes-app
+```
+
+如果已经有目录，就直接：
+
+```bash
+cd /data/daily-notes-app
+sudo git pull
+```
+
+#### 3. 配置环境变量
+
+复制示例配置并修改：
+
+```bash
+cp .env.example .env
+```
+
+至少要改好：
+
+- `DATABASE_URL`
+- `SESSION_SECRET`
+- `AUTH_ALLOW_DEV_USER_HEADER=false`
+
+#### 4. 安装依赖并生成 Prisma 客户端
+
+```bash
+npm install
+npm run db:generate
+```
+
+#### 5. 准备数据库
+
+如果是新库，先初始化表结构：
+
+```bash
+npx prisma db push
+```
+
+如果你后续使用迁移方式，建议按 `docs/database-migrations.md` 里的流程执行。
+
+#### 6. 先做自检
+
+```bash
+npm test
+npm run build
+npm run check:prod
+```
+
+#### 7. 启动服务
+
+开发态可直接：
+
+```bash
+npm run dev
+```
+
+生产环境建议使用 systemd 管理，启动脚本见：
+
+```bash
+npm run deploy:prod
+```
+
+这个脚本会执行：
+
+- 测试
+- 构建
+- 生产环境检查
+- 重启服务
+- 健康检查
+
+#### 8. 配置反向代理
+
+如果你要挂域名，建议用 Nginx 反代到本地 `3000` 端口，并开启 HTTPS。
+
+---
+
+### 方式二：Docker / Docker Compose
+
+#### 1. 安装 Docker
+
+Ubuntu 上先安装：
+
+- Docker Engine
+- Docker Compose 插件
+
+#### 2. 拉取代码
+
+```bash
+cd /data
+sudo git clone https://github.com/W79785823/daily-notes-app.git
+cd daily-notes-app
+```
+
+#### 3. 配置环境变量
+
+同样先复制：
+
+```bash
+cp .env.example .env
+```
+
+然后把 `DATABASE_URL`、`SESSION_SECRET` 等改成正式值。
+
+#### 4. 启动 PostgreSQL 和 Web
+
+```bash
+docker compose up -d
+```
+
+如果只想先启动数据库：
+
+```bash
+docker compose up -d postgres
+```
+
+#### 5. 初始化数据库
+
+首次启动后执行：
+
+```bash
+npm install
+npm run db:generate
+npx prisma db push
+```
+
+#### 6. 验证
+
+```bash
+npm test
+npm run build
+```
+
+#### 7. 访问
+
+默认访问：
+
+```text
+http://服务器IP:3000
+```
+
+---
+
+### 生产认证建议
+
+开发环境可按需要临时开启：
+
+```bash
+AUTH_ALLOW_DEV_USER_HEADER="true"
+```
+
+生产环境必须关闭开发身份头，并设置高强度随机 Session 密钥：
+
+```bash
+AUTH_ALLOW_DEV_USER_HEADER="false"
+SESSION_SECRET="换成足够长的随机字符串"
+```
+
+这样 JSON API 只接受正常登录后的会话，不再接受 `x-user-id` 或 URL 里的 `userId` 调试身份。
+
+## 提醒生成器
+
+```bash
+npm run reminder:daily
+```
+
+详细说明见：`docs/reminders.md`。
+
+## 测试与构建
+
+```bash
+npm test
+npm run build
+```
+
+## 生产部署
+
 当前服务器生产部署脚本：
 
 ```bash
