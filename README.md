@@ -1,6 +1,8 @@
-# 每日事项小便签 MVP
+# 每日事项
 
-公司内部使用的每日事项提醒/协作小便签初版。
+面向内部团队使用的每日事项协作工具，当前只维护 **Web / 移动 Web / PWA** 版本。
+
+> 说明：微信小程序方向已放弃，仓库不再保留小程序、微信云开发云函数、微信登录/API 复用约定等内容。
 
 ## 已实现
 
@@ -8,27 +10,32 @@
 - 角色：成员、管理员（成员能力由管理员单独勾选权限控制）
 - 权限点：`task.create`、`task.assign`、`task.view_all`、`task.edit_all`、`task.delete`、`task.complete_other`、`user.manage`、`permission.manage`
 - 事项：标题、备注、日期、创建人、负责人、完成状态、软删除
-- API：任务列表/创建/编辑/删除/完成，用户列表/创建，初始化示例数据
-- 认证：开发态兼容 `x-user-id`，同时提供 Bearer session token 和微信 `openid` 绑定骨架，方便后续接微信小程序
-- 页面：每日事项看板、用户切换、人员权限概览
+- 认证：账号密码登录、Session Cookie、生产环境关闭开发身份头
+- 页面：移动优先的今日事项、管理中心、账号设置、公告、工作日历
 - 数据库：PostgreSQL + Prisma
-- 容器：Docker Compose，后续可接 Caddy 域名
-- 提醒：`npm run reminder:daily` 可生成每日/逾期事项提醒文本，后续可接微信服务号、企业微信或 Telegram
-- PWA：`docs/pwa.md` 说明安装到桌面、位图图标和离线体验
+- 部署：Docker Compose / systemd 生产部署脚本
+- 提醒：`npm run reminder:daily` 可生成每日/逾期事项提醒文本，后续可接企业微信、Telegram 等通知通道
+- PWA：支持安装到桌面、离线页、桌面应用模式提示和移动端体验优化，说明见 `docs/pwa.md`
+
 ## 本地运行
 
 ```bash
 cp .env.example .env
 npm install
-# 启动 PostgreSQL
 
+# 启动 PostgreSQL
 docker compose up -d postgres
-npx prisma generate
+
+npm run db:generate
 npx prisma db push
 npm run dev
 ```
 
-打开 `http://localhost:3000`。
+打开：
+
+```text
+http://localhost:3000
+```
 
 也可以直接：
 
@@ -36,46 +43,22 @@ npm run dev
 docker compose up
 ```
 
-## API 约定（方便后续微信小程序复用）
-
-认证优先使用 Bearer token：
-
-1. 开发/内测登录：`POST /api/auth/login`，JSON: `{ "userId": "..." }` 或 `{ "name": "管理员" }`
-2. 微信登录：配置 `WECHAT_APP_ID` / `WECHAT_APP_SECRET` 后，`POST /api/auth/login`，JSON: `{ "code": "wx.login 返回的 code" }`
-3. 首次绑定可由管理员调用 `PATCH /api/users/:id/wechat`，或在可信内测场景临时用 `{ "code": "...", "userId": "..." }` 绑定
-4. 响应会返回 `{ "token": "...", "user": {...} }`
-5. 后续请求带请求头：`Authorization: Bearer <token>`
-
-当前 Web MVP 仍保留 `x-user-id` 和 `?userId=` 作为开发兼容。上线前把 `AUTH_ALLOW_DEV_USER_HEADER=false`，即可关闭开发兼容，只保留 Bearer token。未登录的 JSON API 会返回 `401 auth.unauthorized`，不会自动兜底成管理员。
-
-- `POST /api/auth/login` JSON: `{ "userId": "..." }`、`{ "name": "管理员" }` 或 `{ "code": "wx-login-code" }`
-- `PATCH /api/users/:id/wechat` JSON: `{ "wechatOpenId": "...", "wechatUnionId": "..." }`
-- `DELETE /api/users/:id/wechat`
-- `GET /api/tasks?date=YYYY-MM-DD`
-- `POST /api/tasks` JSON: `{ "title": "...", "note": "...", "date": "2026-05-11", "assigneeId": "..." }`
-- `PATCH /api/tasks/:id`
-- `DELETE /api/tasks/:id`
-- `POST /api/tasks/:id/complete` JSON: `{ "completed": true }` 或 `{ "completed": false }`
-- `GET /api/users`
-- `POST /api/users`
-- `POST /api/seed`
-
 ## 生产认证建议
 
-开发环境 `.env` 可保留：
+开发环境可按需要临时开启：
 
 ```bash
 AUTH_ALLOW_DEV_USER_HEADER="true"
 ```
 
-生产环境建议改为：
+生产环境必须关闭开发身份头，并设置高强度随机 Session 密钥：
 
 ```bash
 AUTH_ALLOW_DEV_USER_HEADER="false"
 SESSION_SECRET="换成足够长的随机字符串"
 ```
 
-这样 JSON API 只接受 `Authorization: Bearer <token>`，不会接受 `x-user-id` 或 URL 里的 `userId`。
+这样 JSON API 只接受正常登录后的会话，不再接受 `x-user-id` 或 URL 里的 `userId` 调试身份。
 
 ## 提醒生成器
 
@@ -85,9 +68,19 @@ npm run reminder:daily
 
 详细说明见：`docs/reminders.md`。
 
-## 测试
+## 测试与构建
 
 ```bash
 npm test
 npm run build
 ```
+
+## 生产部署
+
+当前服务器生产部署脚本：
+
+```bash
+npm run deploy:prod
+```
+
+部署前请确认生产环境变量、数据库连接和备份策略。数据库变更说明见：`docs/database-migrations.md`。
