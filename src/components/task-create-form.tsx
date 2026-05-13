@@ -17,6 +17,11 @@ type TaskCreateFormProps = {
   quickNotes?: string[];
 };
 
+function dateHint(value: string) {
+  const [, month, day] = value.match(/^\d{4}-(\d{2})-(\d{2})$/) || [];
+  return month && day ? `${Number(month)}月${Number(day)}日` : value;
+}
+
 export function TaskCreateForm({
   className = 'workspaceCard createCard priorityCard',
   title = '快速新增',
@@ -41,7 +46,11 @@ export function TaskCreateForm({
   useEffect(() => {
     const handleDateSelect = (event: Event) => {
       const nextDate = (event as CustomEvent<{ date?: string }>).detail?.date;
-      if (nextDate) setSelectedDate(nextDate);
+      if (nextDate) {
+        setSelectedDate(nextDate);
+        setError('');
+        setMessage(`已切换到 ${dateHint(nextDate)}，新事项会发布到这一天。`);
+      }
     };
     window.addEventListener('daily-notes:select-date', handleDateSelect);
     return () => window.removeEventListener('daily-notes:select-date', handleDateSelect);
@@ -84,8 +93,9 @@ export function TaskCreateForm({
       if (dateInput) dateInput.value = selectedDate;
       if (assignee) assignee.value = currentUserId;
       if (priority) priority.value = 'NORMAL';
-      setMessage('事项已创建，当前位置已保留。');
+      setMessage(`事项已创建到 ${dateHint(selectedDate)}，当前位置已保留。`);
       window.dispatchEvent(new CustomEvent('daily-notes:task-created', { detail: { task: payload.task } }));
+      window.dispatchEvent(new CustomEvent('daily-notes:task-changed'));
     } catch (err) {
       setError(err instanceof Error ? err.message : '创建失败，请稍后重试。');
     } finally {

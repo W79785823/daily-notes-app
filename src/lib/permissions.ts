@@ -1,4 +1,4 @@
-export type Role = 'MEMBER' | 'COLLABORATOR' | 'ADMIN';
+export type Role = 'MEMBER' | 'ADMIN';
 
 export type Permission =
   | 'task.create'
@@ -25,7 +25,6 @@ export const ALL_PERMISSIONS: Permission[] = [
 
 const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   MEMBER: ['task.create'],
-  COLLABORATOR: ['task.create'],
   ADMIN: ALL_PERMISSIONS,
 };
 

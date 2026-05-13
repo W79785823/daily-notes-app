@@ -157,6 +157,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
         todayHref={`?date=${todayKey}&status=all&assigneeId=all`}
         settingsHref="/manage#account-settings"
         isPlainMember={isPlainMember}
+        canManageUsers={currentUserCanManageUsers}
         date={date}
         dateText={dateLabel(date)}
         relativeText={relativeDay(date, todayKey)}
@@ -264,17 +265,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
             />
           )}
 
-          {!isPlainMember && (
-            <WorkCalendar
-              initialDate={date}
-              initialStats={calendarStats}
-              initialMonthTotal={monthTotal}
-              initialMonthCompletion={monthCompletion}
-              assigneeId={assigneeId}
-              priority={priority}
-              keyword={keyword}
-            />
-          )}
+          <WorkCalendar
+            initialDate={date}
+            initialStats={calendarStats}
+            initialMonthTotal={monthTotal}
+            initialMonthCompletion={monthCompletion}
+            assigneeId={assigneeId}
+            priority={priority}
+            keyword={keyword}
+          />
 
         </aside>
       </section>

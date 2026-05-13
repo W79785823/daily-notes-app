@@ -111,9 +111,9 @@
 
 /* Admin password reset */
 .resetPasswordBox {
-  margin: 0 12px 12px 66px;
-  padding: 10px;
-  border-radius: 15px;
+  margin: 10px 0 0;
+  padding: 12px;
+  border-radius: 17px;
   background: rgba(255, 247, 231, .72);
   border-color: rgba(214,152,72,.22);
 }
@@ -150,7 +150,7 @@
   font-size: 12px;
 }
 @media (max-width: 680px) {
-  .resetPasswordBox { margin: 0 11px 11px; }
+  .resetPasswordBox { margin: 0; }
   .resetPasswordForm { grid-template-columns: 1fr; }
   .smallWarningButton { min-height: 42px; }
 }
@@ -497,4 +497,34 @@ html.cardReturnRight .contentGrid {
 }
 @media (max-width: 680px) {
   .taskEditGrid { grid-template-columns: 1fr; }
+}
+
+/* Today focus card: compact daily guidance on phones */
+@media (max-width: 680px) {
+  .todayFocusCard {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 10px;
+    padding: 15px;
+    border-radius: 22px;
+    background: var(--mobile-card, rgba(255,255,255,.92));
+    border: 1px solid rgba(255,255,255,.86);
+    box-shadow: 0 10px 26px rgba(35,52,44,.07);
+  }
+  .todayFocusMain h2 { font-size: 22px; }
+  .todayFocusMain p { font-size: 13px; }
+  .focusActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+  }
+  .focusActions button {
+    min-height: 38px;
+    padding: 0 10px;
+    box-shadow: none;
+  }
+  .focusActions button:only-child,
+  .focusActions button:nth-child(3) {
+    grid-column: 1 / -1;
+  }
 }

@@ -30,4 +30,10 @@ describe('手机端当前账号轻量化', () => {
     expect(css).toContain('.accountChipMenu');
     expect(css).toContain('.accountMenuHeader');
   });
+
+  it('手机端退出登录表单提交时不先卸载菜单，避免移动浏览器取消提交', () => {
+    const menu = read('src/components/mobile-account-menu.tsx');
+    expect(menu).toContain('<form action="/api/auth/logout" method="post">');
+    expect(menu).not.toContain('onSubmit={() => setOpen(false)}');
+  });
 });

@@ -117,6 +117,17 @@ export function TaskFocusPanel({
     done: currentDone,
     overdue: overdueCount,
   };
+  const highPriorityTasks = localTasks
+    .filter((task) => !task.completedAt && ['URGENT', 'HIGH'].includes(task.priority))
+    .slice(0, 2);
+  const focusTitle = overdueCount > 0 ? '先处理逾期待办' : currentTodo > 0 ? '今天还有事项待完成' : '今天已经清爽了';
+  const focusCopy = overdueCount > 0
+    ? `${overdueCount} 条逾期待办需要尽快处理，今天还有 ${currentTodo} 条未完成。`
+    : currentTodo > 0
+      ? `今天还有 ${currentTodo} 条待完成，优先看高优先级和与我相关的事项。`
+      : currentTotal > 0
+        ? '当前日期事项都完成了，可以切换日期或继续新增安排。'
+        : '当前日期还没有事项，可以先发布一条工作安排。';
 
   const refreshTasks = async (nextSearch: string, nextView: StatusView) => {
     const params = new URLSearchParams(nextSearch.startsWith('?') ? nextSearch.slice(1) : nextSearch);
@@ -301,6 +312,25 @@ export function TaskFocusPanel({
         <div className="statCard"><span>逾期待办</span><strong>{overdueCount}</strong><em>跨日期未完成事项</em></div>
         <div className="statCard"><span>与我相关</span><strong>{mineCount}</strong><em>{currentUserName} · {currentUserRoleLabel}</em></div>
         <div className="statCard"><span>当前日期</span><strong>{currentTotal}</strong><em>{todayKey}</em></div>
+      </section>
+
+      <section className="todayFocusCard" aria-label="今日聚焦">
+        <div className="todayFocusMain">
+          <span className="sectionLabel">FOCUS</span>
+          <h2>{focusTitle}</h2>
+          <p>{focusCopy}</p>
+          {highPriorityTasks.length > 0 && (
+            <div className="focusPriorityList" aria-label="优先处理事项">
+              <b>优先处理</b>
+              {highPriorityTasks.map((task) => <span key={task.id}>{task.title}</span>)}
+            </div>
+          )}
+        </div>
+        <div className="focusActions">
+          {overdueCount > 0 && <button type="button" onClick={() => void switchView('overdue')}>处理逾期</button>}
+          {currentTodo > 0 && <button type="button" onClick={() => void switchView('todo')}>看待完成</button>}
+          <button type="button" className="ghostFocusButton" onClick={() => void switchView('all')}>全部事项</button>
+        </div>
       </section>
 
       <section className="controlDock compactControlDock taskPanelDock">

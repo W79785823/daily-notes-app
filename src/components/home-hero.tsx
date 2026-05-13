@@ -7,6 +7,7 @@ type HomeHeroProps = {
   todayHref: string;
   settingsHref: string;
   isPlainMember: boolean;
+  canManageUsers: boolean;
   date: string;
   dateText: string;
   relativeText: string;
@@ -30,6 +31,7 @@ export function HomeHero({
   todayHref,
   settingsHref,
   isPlainMember,
+  canManageUsers,
   date,
   dateText,
   relativeText,
@@ -63,6 +65,7 @@ export function HomeHero({
         <p>{isPlainMember ? '这里会优先显示与你相关的今日事项。打开就看待办，完成后点一下就好。' : '每日事项、负责人、完成情况和团队公告统一放在这里。每天打开就知道今天谁负责什么、哪些事要一起推进。'}</p>
         <div className="heroActions heroAccountActions">
           <span className="heroIdentity"><small>当前账号</small><b>{currentUserName} · {roleLabel}</b></span>
+          <a className="heroButton manageHeroLink" href={settingsHref}>{canManageUsers ? '管理中心' : '账号设置'}</a>
           <form action="/api/auth/logout" method="post"><button className="heroButton ghostHeroButton">退出登录</button></form>
         </div>
       </div>

@@ -5,20 +5,20 @@ describe('人员管理', () => {
   const admin: User = { id: 'u-admin', openid: 'openid-admin', name: '管理员', role: 'ADMIN', permissions: [], active: true };
   const alice: User = { id: 'u-alice', openid: null, name: '张三', role: 'MEMBER', permissions: [], active: true };
 
-  it('管理员可以创建未绑定微信的人员', () => {
-    const created = createUser(admin, { name: '李四', role: 'COLLABORATOR' });
+  it('管理员创建人员时默认收敛为普通成员', () => {
+    const created = createUser(admin, { name: '李四', role: 'MEMBER' });
 
     expect(created.name).toBe('李四');
-    expect(created.role).toBe('COLLABORATOR');
+    expect(created.role).toBe('MEMBER');
     expect(created.openid).toBeNull();
     expect(created.active).toBe(true);
   });
 
-  it('管理员可以修改人员姓名、角色和额外权限', () => {
-    const updated = updateUser(admin, alice, { name: '张三丰', role: 'COLLABORATOR', permissions: ['task.assign'] });
+  it('管理员可以修改人员姓名和额外权限，身份保持普通成员', () => {
+    const updated = updateUser(admin, alice, { name: '张三丰', role: 'MEMBER', permissions: ['task.assign'] });
 
     expect(updated.name).toBe('张三丰');
-    expect(updated.role).toBe('COLLABORATOR');
+    expect(updated.role).toBe('MEMBER');
     expect(updated.permissions).toEqual(['task.assign']);
   });
 

@@ -4,6 +4,7 @@ import { AddMemberForm, MemberEditForm, ResetPasswordForm } from '@/components/m
 type ManageUser = {
   id: string;
   name: string;
+  loginName?: string | null;
   role: Role;
   active: boolean;
   permissions: string[];
@@ -22,7 +23,6 @@ type TopAssignee = { user?: ManageUser; count: number } | undefined;
 
 const ROLE_LABELS: Record<Role, string> = {
   MEMBER: '成员',
-  COLLABORATOR: '成员',
   ADMIN: '管理员',
 };
 
@@ -80,6 +80,7 @@ export function ManageHero({ personal = false }: { personal?: boolean }) {
         <h1>{personal ? '我的' : '管理中心'}</h1>
         <p>{personal ? '这里放账号设置和登录密码修改。日常事项仍在首页处理。' : '人员、权限、公告和审计日志集中在这里。手机端首页只保留高频事项操作。'}</p>
       </div>
+      <a className="heroButton manageBackButton" href="/">返回今日事项</a>
     </section>
   );
 }
@@ -105,37 +106,53 @@ export function PendingMembers({ users, canManagePermissions }: { users: ManageU
       <div className="sectionHead"><div><span className="sectionLabel">ACCESS</span><h2>待审核成员</h2></div><span>{users.length} 人</span></div>
       <div className="approvalList">
         {users.map((user) => (
-          <MemberEditForm key={user.id} user={{ id: user.id, name: user.name, role: user.role, active: true, permissions: user.permissions }} permissions={permissionOptions} canManagePermissions={canManagePermissions} compactApprove />
+          <MemberEditForm key={user.id} user={{ id: user.id, name: user.name, loginName: user.loginName, role: user.role, active: true, permissions: user.permissions }} permissions={permissionOptions} canManagePermissions={canManagePermissions} compactApprove />
         ))}
       </div>
     </div>
   );
 }
 
-export function MemberManagementPanel({ users, canManagePermissions }: { users: ManageUser[]; canManagePermissions: boolean }) {
+export function MemberManagementPanel({ users, currentUserId, canManagePermissions }: { users: ManageUser[]; currentUserId: string; canManagePermissions: boolean }) {
   return (
     <section className="workspaceCard peopleCard" id="members">
       <div className="sectionHead"><div><span className="sectionLabel">MEMBERS</span><h2>人员与权限</h2></div><span>{users.length} 人</span></div>
       <div className="users modernUsers">
-        {users.map((user) => (
+        {users.map((user) => {
+          const isCurrentUser = user.id === currentUserId;
+          const isProtectedAdmin = user.role === 'ADMIN';
+          const protectedReason = isCurrentUser ? '当前登录账号受保护' : '唯一管理员账号受保护';
+          const protectedCopy = isCurrentUser
+            ? '不能在人员与权限里修改自己的角色、权限或启用状态，避免误把唯一管理员降级后失去管理入口。需要改密码请使用“我的账号”。'
+            : '系统只保留一个管理员账号。管理员不参与普通成员权限调整，避免被误停用或降级。';
+          return (
           <details key={user.id} className={cn('userEditCard modernUserRow memberCollapseCard', !user.active && 'pendingUserRow')}>
             <summary className="memberCollapseSummary">
               <span className="avatar">{user.name.slice(0, 1)}</span>
               <span className="memberSummaryText">
-                <b>{user.name}</b>
-                <small>{user.active ? '已启用' : '待审核'} · {roleLabel(user.role)} · 额外权限 {user.permissions.length}</small>
+                <b>{user.name}{isCurrentUser ? '（当前账号）' : ''}</b>
+                <small>{user.active ? '已启用' : '待审核'} · {roleLabel(user.role)} · {user.loginName ? `账号 ${user.loginName}` : '未设置登录账号'} · 额外权限 {user.permissions.length}</small>
               </span>
-              <span className="manageHint">展开管理</span>
+              <span className="manageHint">{isCurrentUser || isProtectedAdmin ? '受保护' : '展开管理'}</span>
             </summary>
             <div className="memberEditBody">
-              <MemberEditForm user={{ id: user.id, name: user.name, role: user.role, active: user.active, permissions: user.permissions }} permissions={permissionOptions} canManagePermissions={canManagePermissions} />
-              <details className="resetPasswordBox">
-                <summary>重置登录密码</summary>
-                <ResetPasswordForm user={{ id: user.id, name: user.name }} />
-              </details>
+              {isCurrentUser || isProtectedAdmin ? (
+                <div className="selfProtectedBox">
+                  <b>{protectedReason}</b>
+                  <p>{protectedCopy}</p>
+                </div>
+              ) : (
+                <>
+                  <MemberEditForm user={{ id: user.id, name: user.name, loginName: user.loginName, role: user.role, active: user.active, permissions: user.permissions }} permissions={permissionOptions} canManagePermissions={canManagePermissions} />
+                  <details className="resetPasswordBox">
+                    <summary>重置登录密码</summary>
+                    <ResetPasswordForm user={{ id: user.id, name: user.name }} />
+                  </details>
+                </>
+              )}
             </div>
           </details>
-        ))}
+        );})}
       </div>
     </section>
   );
@@ -145,7 +162,7 @@ export function ManageSidePanel({ canManageUsers, canManagePermissions, auditLog
   return (
     <aside className="sideStack">
       {canManageUsers && (
-        <details className="workspaceCard addMemberCard collapsibleToolCard">
+        <details className="workspaceCard addMemberCard collapsibleToolCard" open>
           <summary className="toolSummary"><span><b>新增成员</b><small>管理员操作</small></span><em>展开</em></summary>
           <div className="toolBody">
             <AddMemberForm canManagePermissions={canManagePermissions} permissions={permissionOptions} />

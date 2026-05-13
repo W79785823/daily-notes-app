@@ -272,6 +272,14 @@
     max-height: none;
     overflow: visible;
   }
+  .memberEditBody { padding: 0 11px 11px; }
+  .polishedMemberEditForm { padding: 11px; border-radius: 18px; }
+  .memberEditGrid, .memberPermissionGrid { grid-template-columns: 1fr; }
+  .permissionGroupCard { padding: 10px; }
+  .permissionGroupCard legend small { line-height: 1.45; }
+  .memberEditSectionHead { align-items: flex-start; flex-direction: column; }
+  .memberEditFooter { align-items: stretch; flex-direction: column; }
+  .memberSaveButton { width: 100%; }
 }
 
 /* Mobile-first low-frequency tools: keep admin actions folded away */

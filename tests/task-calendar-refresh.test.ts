@@ -12,6 +12,7 @@ describe('任务变更会驱动日历刷新', () => {
 
     expect(taskPanel).toContain("daily-notes:task-changed");
     expect(taskPanel).toContain('notifyTaskChanged();');
+    expect(read('src/components/task-create-form.tsx')).toContain("daily-notes:task-changed");
     expect(calendar).toContain("daily-notes:task-changed");
     expect(calendar).toContain('void loadMonth(monthDate);');
   });

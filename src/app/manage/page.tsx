@@ -13,6 +13,9 @@ type Params = { error?: string; ok?: string };
 const ERROR_MESSAGES: Record<string, string> = {
   'user.manage.forbidden': '没有权限管理人员。',
   'user.not_found': '人员不存在。',
+  'user.self_update.forbidden': '不能在人员与权限里修改自己的角色、权限或启用状态，请至少保留一个管理员账号。',
+  'user.admin_protected.forbidden': '唯一管理员账号受保护，不能在人员与权限里修改。',
+  'user.admin_singleton.forbidden': '系统只保留一个管理员，其他账号请使用普通成员身份。',
   'permission.manage.forbidden': '没有权限修改角色。',
   'announcement.create.forbidden': '没有权限发布公告。',
   'announcement.delete.forbidden': '没有权限删除公告。',
@@ -75,7 +78,7 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
               <AnnouncementPublishForm />
             </details>
           )}
-          <details id="account-settings" className="workspaceCard manageAccountCard collapsibleToolCard">
+          <details id="account-settings" className="workspaceCard manageAccountCard collapsibleToolCard" open>
             <summary className="toolSummary"><span><b>我的账号</b><small>修改自己的登录密码</small></span><em>展开</em></summary>
             <div className="toolBody">
               <form className="passwordForm" action="/api/auth/change-password" method="post">
@@ -90,7 +93,7 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
           </details>
           {currentUserCanManageUsers && <TeamOverview users={users} activeUsers={activeUsers} pendingUsers={pendingUsers} topAssignee={topAssignee} />}
           {currentUserCanManageUsers && <PendingMembers users={pendingUsers} canManagePermissions={currentUserCanManagePermissions} />}
-          {currentUserCanManageUsers && <MemberManagementPanel users={users} canManagePermissions={currentUserCanManagePermissions} />}
+          {currentUserCanManageUsers && <MemberManagementPanel users={users} currentUserId={currentUser.id} canManagePermissions={currentUserCanManagePermissions} />}
         </div>
 
         {(currentUserCanManageUsers || currentUserCanCreateAnnouncement) && (

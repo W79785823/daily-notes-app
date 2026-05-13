@@ -13,6 +13,7 @@ describe('创建事项日期跟随日历选择', () => {
     expect(calendar).toContain("daily-notes:select-date");
     expect(form).toContain("window.addEventListener('daily-notes:select-date'");
     expect(form).toContain('setSelectedDate(nextDate)');
+    expect(form).toContain('新事项会发布到这一天');
     expect(form).toContain('value={selectedDate}');
     expect(form).toContain("date: String(formData.get('date') || selectedDate)");
   });

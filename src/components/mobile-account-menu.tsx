@@ -49,7 +49,7 @@ export function MobileAccountMenu({ name, roleLabel, todayHref, settingsHref }: 
           </div>
           <a href={todayHref} onClick={() => setOpen(false)}>回到今天</a>
           <a href={settingsHref} onClick={() => setOpen(false)}>账号设置</a>
-          <form action="/api/auth/logout" method="post" onSubmit={() => setOpen(false)}>
+          <form action="/api/auth/logout" method="post">
             <button type="submit">退出登录</button>
           </form>
         </div>

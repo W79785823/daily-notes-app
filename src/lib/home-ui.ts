@@ -2,7 +2,6 @@ import { type Role } from '@/lib/permissions';
 
 export const ROLE_LABELS: Record<Role, string> = {
   MEMBER: '成员',
-  COLLABORATOR: '成员',
   ADMIN: '管理员',
 };
 

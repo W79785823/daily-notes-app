@@ -37,7 +37,7 @@ function assertCanManage(actor: User): void {
 }
 
 function normalizeRole(role: Role | undefined): Role {
-  return role && ['MEMBER', 'COLLABORATOR', 'ADMIN'].includes(role) ? role : 'MEMBER';
+  return role === 'ADMIN' ? 'ADMIN' : 'MEMBER';
 }
 
 function cleanPermissions(permissions: Permission[] | undefined): Permission[] {

@@ -4,6 +4,8 @@ import { getRequestUser, userSchema } from '@/lib/api';
 import { canManagePermissions, canManageUsers, sanitizeAssignablePermissions } from '@/lib/auth';
 import { formError, redirectWithParam, validationError } from '@/lib/http';
 
+const SINGLE_ADMIN_ERROR = '系统只保留一个管理员，其他账号请使用普通成员身份';
+
 export async function GET(request: NextRequest) {
   const user = await getRequestUser(request);
   if (!user) return NextResponse.json({ error: '请先登录', code: 'auth.unauthorized' }, { status: 401 });
@@ -43,9 +45,12 @@ export async function POST(request: NextRequest) {
   }
   const parsed = userSchema.safeParse(payload);
   if (!parsed.success) return validationError(isForm, redirectTo, parsed.error);
+  if (parsed.data.role === 'ADMIN') {
+    return formError({ isForm, redirectTo, errorCode: 'user.admin_singleton.forbidden', jsonMessage: SINGLE_ADMIN_ERROR, status: 400 });
+  }
   const safeData = {
     ...parsed.data,
-    role: parsed.data.role === 'ADMIN' && !canManagePermissions(user) ? 'MEMBER' : parsed.data.role,
+    role: 'MEMBER' as const,
     permissions: sanitizeAssignablePermissions(user, parsed.data.permissions),
     active: true,
   };

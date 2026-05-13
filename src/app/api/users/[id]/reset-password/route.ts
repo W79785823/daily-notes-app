@@ -49,6 +49,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!target) {
     return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'user.not_found', jsonMessage: '人员不存在', status: 404 });
   }
+  if (target.role === 'ADMIN') {
+    return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'user.admin_protected.forbidden', jsonMessage: '唯一管理员账号受保护，不能在人员与权限里重置密码', status: 400 });
+  }
 
   await prisma.user.update({ where: { id }, data: { passwordHash: hashPassword(parsed.data.newPassword), sessionVersion: { increment: 1 } } });
   await prisma.auditLog.create({

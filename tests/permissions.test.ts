@@ -11,14 +11,6 @@ describe('权限模型', () => {
     expect(can(permissions, 'user.manage')).toBe(false);
   });
 
-  it('协作成员在界面上也按普通成员处理，额外能力由管理员单独分配', () => {
-    const permissions = defaultPermissionsForRole('COLLABORATOR');
-
-    expect(can(permissions, 'task.create')).toBe(true);
-    expect(can(permissions, 'task.assign')).toBe(false);
-    expect(can(permissions, 'user.manage')).toBe(false);
-    expect(can(permissions, 'permission.manage')).toBe(false);
-  });
 
   it('管理员拥有全部权限点', () => {
     const permissions = defaultPermissionsForRole('ADMIN');

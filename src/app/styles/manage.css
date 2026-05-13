@@ -6,6 +6,11 @@
   line-height: 1.75;
 }
 .manageEntryButton { text-align: center; text-decoration: none; }
+.manageBackButton {
+  align-self: center;
+  white-space: nowrap;
+  text-decoration: none;
+}
 .manageShell { padding-bottom: 92px; }
 .manageHero {
   display: flex;
@@ -50,6 +55,7 @@
 @media (max-width: 900px) {
   .manageGrid { grid-template-columns: 1fr; }
   .manageHero { align-items: flex-start; flex-direction: column; }
+  .manageBackButton { align-self: flex-start; }
 }
 
 @media (max-width: 680px) {

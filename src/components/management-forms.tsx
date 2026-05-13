@@ -3,7 +3,24 @@
 import { FormEvent, useState } from 'react';
 
 type PermissionOption = { value: string; label: string };
-type UserRow = { id: string; name: string; role: string; active: boolean; permissions: string[] };
+type PermissionGroup = { title: string; hint: string; values: string[] };
+type UserRow = { id: string; name: string; loginName?: string | null; role: string; active: boolean; permissions: string[] };
+
+const permissionGroups: PermissionGroup[] = [
+  { title: '事项权限', hint: '控制事项查看、指派、编辑和删除', values: ['task.create', 'task.assign', 'task.view_all', 'task.edit_all', 'task.delete', 'task.complete_other'] },
+  { title: '人员权限', hint: '控制成员新增、停用和权限配置', values: ['user.manage', 'permission.manage'] },
+  { title: '公告权限', hint: '用于发布团队公告和置顶提醒', values: ['announcement.create'] },
+];
+
+function groupedPermissions(permissions: PermissionOption[]) {
+  const byValue = new Map(permissions.map((permission) => [permission.value, permission]));
+  const grouped = permissionGroups
+    .map((group) => ({ ...group, permissions: group.values.map((value) => byValue.get(value)).filter(Boolean) as PermissionOption[] }))
+    .filter((group) => group.permissions.length > 0);
+  const groupedValues = new Set(permissionGroups.flatMap((group) => group.values));
+  const other = permissions.filter((permission) => !groupedValues.has(permission.value));
+  return other.length > 0 ? [...grouped, { title: '其他权限', hint: '系统预留的额外能力', values: other.map((p) => p.value), permissions: other }] : grouped;
+}
 
 type AnnouncementFormProps = {
   className?: string;
@@ -85,7 +102,7 @@ export function AddMemberForm({ canManagePermissions, permissions }: AddMemberFo
           name: String(formData.get('name') || ''),
           loginName: String(formData.get('loginName') || ''),
           password: String(formData.get('password') || ''),
-          role: String(formData.get('role') || 'MEMBER'),
+          role: 'MEMBER',
           permissions: formData.getAll('permissions').map(String),
           active: true,
         }),
@@ -106,10 +123,11 @@ export function AddMemberForm({ canManagePermissions, permissions }: AddMemberFo
       <input name="name" placeholder="成员姓名" required />
       <input name="loginName" placeholder="登录账号" required />
       <input name="password" type="text" placeholder="初始密码" required />
-      <select name="role" defaultValue="MEMBER">
-        <option value="MEMBER">成员</option>
-        <option value="ADMIN">管理员</option>
-      </select>
+      <input type="hidden" name="role" value="MEMBER" />
+      <div className="roleExplainCard addMemberRoleNote">
+        <span>普通成员</span>
+        <small>系统只保留 admin 一个管理员，新成员默认都是普通成员，可按需勾选额外协作权限。</small>
+      </div>
       {canManagePermissions && (
         <details className="approvalPermissionBox addMemberPermissionBox">
           <summary>额外权限</summary>
@@ -135,6 +153,11 @@ export function MemberEditForm({ user, permissions, canManagePermissions, compac
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [active, setActive] = useState(user.active);
+  const roleText = user.role === 'ADMIN' ? '管理员' : '成员';
+  const roleHint = user.role === 'ADMIN' ? '管理员默认拥有全部管理能力，请只给核心负责人使用。' : '成员默认只处理自己的事项，可按需追加额外权限。';
+  const statusText = active ? '已启用' : '已停用';
+  const permissionCount = user.permissions.length;
+  const grouped = groupedPermissions(permissions);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -152,6 +175,7 @@ export function MemberEditForm({ user, permissions, canManagePermissions, compac
         body: JSON.stringify({
           active,
           name: String(formData.get('name') || ''),
+          loginName: String(formData.get('loginName') || '').trim(),
           role: String(formData.get('role') || user.role),
           permissions: formData.getAll('permissions').map(String),
         }),
@@ -166,30 +190,81 @@ export function MemberEditForm({ user, permissions, canManagePermissions, compac
     }
   };
 
-  return (
-    <form className={compactApprove ? 'approvalRow approvalForm' : 'memberEditForm'} onSubmit={submit}>
-      {compactApprove && <span className="avatar alertAvatar">{user.name.slice(0, 1)}</span>}
-      <div className={compactApprove ? 'approvalMain' : undefined}>
-        {compactApprove && <><b>{user.name}</b><small>{user.name} · 审核通过前可修正姓名、身份和额外权限</small></>}
-        <div className={compactApprove ? 'approvalFields' : undefined}>
-          <input name="name" defaultValue={user.name} placeholder="姓名" required />
-          <select name="role" defaultValue={user.role === 'ADMIN' ? 'ADMIN' : 'MEMBER'}>
-            <option value="MEMBER">成员</option>
-            <option value="ADMIN">管理员</option>
-          </select>
+  if (compactApprove) {
+    return (
+      <form className="approvalRow approvalForm" onSubmit={submit}>
+        <span className="avatar alertAvatar">{user.name.slice(0, 1)}</span>
+        <div className="approvalMain">
+          <b>{user.name}</b><small>{user.loginName ? `账号 ${user.loginName} · 审核通过前可修正信息并配置额外权限` : '未设置登录账号 · 审核通过前可补充账号并配置额外权限'}</small>
+          <div className="approvalFields singleApprovalField">
+            <input name="name" defaultValue={user.name} placeholder="姓名" required />
+            <input name="loginName" defaultValue={user.loginName || ''} placeholder="登录账号" />
+            <input type="hidden" name="role" value="MEMBER" />
+          </div>
+          <input type="hidden" name="active" value="true" />
+          {canManagePermissions && (
+            <details className="approvalPermissionBox">
+              <summary>分配额外权限</summary>
+              <div className="checks modernChecks">{permissions.map((p) => <label key={p.value}><input type="checkbox" name="permissions" value={p.value} defaultChecked={user.permissions.includes(p.value)} />{p.label}</label>)}</div>
+            </details>
+          )}
+          {message && <div className="inlineTaskNotice">{message}</div>}
+          {error && <div className="inlineTaskNotice error">{error}</div>}
         </div>
-        {!compactApprove && <label className="inlineCheck"><input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} />启用账号</label>}
-        {compactApprove && <input type="hidden" name="active" value="true" />}
-        {canManagePermissions && (
-          <details className="approvalPermissionBox">
-            <summary>{compactApprove ? '分配额外权限' : '额外权限'}</summary>
-            <div className="checks modernChecks">{permissions.map((p) => <label key={p.value}><input type="checkbox" name="permissions" value={p.value} defaultChecked={user.permissions.includes(p.value)} />{p.label}</label>)}</div>
-          </details>
-        )}
-        {message && <div className="inlineTaskNotice">{message}</div>}
-        {error && <div className="inlineTaskNotice error">{error}</div>}
+        <button className="approveButton" disabled={busy}>{busy ? '保存中…' : '审核通过'}</button>
+      </form>
+    );
+  }
+
+  return (
+    <form className="memberEditForm polishedMemberEditForm" onSubmit={submit}>
+      <div className="memberEditOverview">
+        <span className="memberEditAvatar">{user.name.slice(0, 1)}</span>
+        <div>
+          <b>{user.name}</b>
+          <small>{statusText} · {roleText} · {user.loginName ? `账号 ${user.loginName}` : '未设置登录账号'} · 额外权限 {permissionCount}</small>
+        </div>
       </div>
-      <button className={compactApprove ? 'approveButton' : 'fullButton'} disabled={busy}>{busy ? '保存中…' : compactApprove ? '审核通过' : '保存'}</button>
+
+      <section className="memberEditSection">
+        <div className="memberEditSectionHead">
+          <span>基础信息</span>
+          <small>姓名、身份和账号状态</small>
+        </div>
+        <div className="memberEditGrid">
+          <label>姓名<input name="name" defaultValue={user.name} placeholder="姓名" required /></label>
+          <label>登录账号<input name="loginName" defaultValue={user.loginName || ''} placeholder="例如 zhangsan" pattern="[a-zA-Z0-9._-]{2,40}" title="账号只能使用 2-40 位字母、数字、点、横线和下划线" /></label>
+          <label>身份<div className="readonlyRolePill">普通成员</div><input type="hidden" name="role" value="MEMBER" /></label>
+        </div>
+        <div className="roleExplainCard">
+          <span>{roleText}</span>
+          <small>{roleHint}</small>
+        </div>
+        <label className="memberStatusSwitch"><input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} /><span><b>启用账号</b><small>{active ? '该成员可以登录和操作事项' : '停用后该成员不能继续登录'}</small></span></label>
+      </section>
+
+      {canManagePermissions && (
+        <section className="memberEditSection memberPermissionSection">
+          <div className="memberEditSectionHead">
+            <span>额外权限</span>
+            <small>仅给需要协作管理的成员开启</small>
+          </div>
+          <div className="checks modernChecks groupedPermissionList">
+            {grouped.map((group) => (
+              <fieldset key={group.title} className="permissionGroupCard">
+                <legend><span>{group.title}</span><small>{group.hint}</small></legend>
+                <div className="memberPermissionGrid">{group.permissions.map((p) => <label key={p.value}><input type="checkbox" name="permissions" value={p.value} defaultChecked={user.permissions.includes(p.value)} />{p.label}</label>)}</div>
+              </fieldset>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {(message || error) && <div className={error ? 'inlineTaskNotice error' : 'inlineTaskNotice'}>{error || message}</div>}
+      <div className="memberEditFooter">
+        <span>{active ? '保存后立即生效。' : '将停用此账号，请谨慎确认。'}</span>
+        <button className="fullButton memberSaveButton" disabled={busy}>{busy ? '保存中…' : '保存成员设置'}</button>
+      </div>
     </form>
   );
 }
