@@ -1,0 +1,178 @@
+<view class="dashboard">
+  <view class="heroPanel">
+    <view class="heroGlow"></view>
+    <view class="heroTop">
+      <view>
+        <text class="eyebrow">每日事项</text>
+        <view class="heroTitle">今天的事情，一眼看清</view>
+        <view class="heroSub">{{user.name || '加载中'}} · {{user.roleLabel || user.role || ''}} · 完成率 {{summary.progress}}% · 逾期 {{summary.overdue}}</view>
+      </view>
+      <picker mode="date" value="{{date}}" bindchange="onDateChange">
+        <view class="dateChip">{{date}}</view>
+      </picker>
+    </view>
+    <view class="progressTrack">
+      <view class="progressBar" style="width: {{summary.progress}}%"></view>
+    </view>
+  </view>
+
+  <view wx:if="{{pendingApproval}}" class="pending glassCard">
+    <view class="sectionTitle">账号待审核</view>
+    <view class="muted">你的微信已登记为 {{user.name}}，请联系管理员在「人员」页启用后再使用。</view>
+  </view>
+
+  <block wx:else>
+    <view class="metricGrid">
+      <view class="metricCard metricPrimary"><view class="metricNum">{{summary.todo}}</view><view class="metricText">待处理</view></view>
+      <view class="metricCard"><view class="metricNum">{{summary.done}}</view><view class="metricText">已完成</view></view>
+      <view class="metricCard"><view class="metricNum">{{summary.mine}}</view><view class="metricText">与我相关</view></view>
+      <view class="metricCard urgent"><view class="metricNum">{{summary.urgent}}</view><view class="metricText">重要/紧急</view></view>
+      <view class="metricCard overdueMetric"><view class="metricNum">{{summary.overdue}}</view><view class="metricText">逾期未完成</view></view>
+    </view>
+
+    <view class="noticeBoard glassCard">
+      <view class="noticeHead">
+        <view>
+          <view class="sectionTitle">团队公告</view>
+          <view class="muted small">思源纺织班前通知、临时安排和确认收到都在这里</view>
+        </view>
+        <view class="unreadPill" wx:if="{{unreadAnnouncements > 0}}">{{unreadAnnouncements}} 条未确认</view>
+        <view class="readPill" wx:else>全部已确认</view>
+      </view>
+      <view wx:if="{{announcements.length === 0}}" class="noticeEmpty">暂无公告</view>
+      <block wx:else>
+        <view wx:for="{{announcements}}" wx:key="_id" class="noticeItem {{item.pinned ? 'pinned' : ''}} {{item.isRead ? 'read' : 'unread'}}">
+          <view class="noticeTitleRow">
+            <view class="noticeTitle">{{item.title}}</view>
+            <text wx:if="{{item.pinned}}" class="pinBadge">置顶</text>
+            <text class="readBadge {{item.isRead ? 'done' : ''}}">{{item.isRead ? '已确认' : '待确认'}}</text>
+          </view>
+          <view class="noticeContent">{{item.content}}</view>
+          <view class="noticeMeta">{{item.authorName}} · {{item.createdLabel}}</view>
+          <view class="noticeActions">
+            <button class="primary noticeConfirm" wx:if="{{!item.isRead}}" disabled="{{submitting}}" data-id="{{item._id}}" bindtap="markAnnouncementRead">确认收到</button>
+            <button class="secondary noticeConfirm" wx:else disabled="true">已确认收到</button>
+            <button class="danger noticeDelete" wx:if="{{canCreateAnnouncement || item.authorOpenId === user.openid}}" disabled="{{submitting}}" data-id="{{item._id}}" bindtap="removeAnnouncement">删除</button>
+          </view>
+        </view>
+      </block>
+    </view>
+
+    <view wx:if="{{canCreateAnnouncement}}" class="glassCard formCard noticeCreateCard">
+      <view class="formHead">
+        <view>
+          <view class="sectionTitle">发布公告</view>
+          <view class="muted small">公告标题和内容会显示给团队成员</view>
+        </view>
+        <text class="spark">📣</text>
+      </view>
+      <input class="input" placeholder="公告标题" value="{{announcementTitle}}" bindinput="onAnnouncementTitleInput" />
+      <textarea placeholder="公告内容" value="{{announcementContent}}" bindinput="onAnnouncementContentInput" />
+      <checkbox-group bindchange="onAnnouncementPinnedChange">
+        <label class="inlineCheck"><checkbox value="pinned" checked="{{announcementPinned}}" />置顶公告</label>
+      </checkbox-group>
+      <button class="primary bigButton" loading="{{submitting}}" disabled="{{submitting}}" bindtap="createAnnouncement">{{submitting ? '发布中...' : '发布公告'}}</button>
+    </view>
+
+    <view class="toolbar glassCard">
+      <view class="searchRow">
+        <input class="searchInput" placeholder="搜索事项标题或备注" value="{{keyword}}" confirm-type="search" bindinput="onKeywordInput" bindconfirm="searchTasks" />
+        <button class="miniPrimary" bindtap="searchTasks">搜索</button>
+      </view>
+      <view class="filterRow">
+        <picker range="{{assigneeFilters}}" range-key="name" value="{{assigneeFilterIndex}}" bindchange="onFilterAssigneeChange">
+          <view class="filterChip">负责人：{{assigneeFilters[assigneeFilterIndex].name}}</view>
+        </picker>
+        <button class="ghostMini" bindtap="clearSearch">重置</button>
+      </view>
+    </view>
+
+    <view class="tabs glassTabs">
+      <button class="{{status === 'all' ? 'active' : ''}}" data-status="all" bindtap="onStatusTap">全部</button>
+      <button class="{{status === 'todo' ? 'active' : ''}}" data-status="todo" bindtap="onStatusTap">待完成</button>
+      <button class="{{status === 'done' ? 'active' : ''}}" data-status="done" bindtap="onStatusTap">已完成</button>
+      <button class="{{status === 'overdue' ? 'active overdueActive' : ''}}" data-status="overdue" bindtap="onStatusTap">逾期待办</button>
+    </view>
+
+    <view wx:if="{{canCreateTask}}" class="glassCard formCard createCard">
+      <view class="formHead">
+        <view>
+          <view class="sectionTitle">新增事项</view>
+          <view class="muted small">给今天加一个明确动作</view>
+        </view>
+        <text class="spark">✦</text>
+      </view>
+      <input class="input" placeholder="事项标题" value="{{title}}" bindinput="onTitleInput" />
+      <textarea placeholder="备注、完成标准、相关信息" value="{{note}}" bindinput="onNoteInput" />
+      <view class="twoCols">
+        <picker range="{{priorityOptions}}" range-key="label" value="{{priorityIndex}}" bindchange="onPriorityChange">
+          <view class="pickerLine">优先级：{{priorityOptions[priorityIndex].icon}} {{priorityOptions[priorityIndex].label}}</view>
+        </picker>
+        <picker range="{{categoryOptions}}" range-key="label" value="{{categoryIndex}}" bindchange="onCategoryChange">
+          <view class="pickerLine">分类：{{categoryOptions[categoryIndex].label}}</view>
+        </picker>
+      </view>
+      <picker range="{{users}}" range-key="name" value="{{assigneeIndex}}" bindchange="onAssigneeChange">
+        <view class="pickerLine">负责人：{{users[assigneeIndex].name || user.name || '我'}}</view>
+      </picker>
+      <button class="primary bigButton" loading="{{submitting}}" disabled="{{submitting}}" bindtap="createTask">{{submitting ? '处理中...' : '创建事项'}}</button>
+    </view>
+
+    <view wx:if="{{editingTaskId}}" class="glassCard formCard editCard">
+      <view class="sectionTitle">编辑事项</view>
+      <input class="input" placeholder="事项标题" value="{{editTitle}}" bindinput="onEditTitleInput" />
+      <textarea placeholder="备注、完成标准、相关信息" value="{{editNote}}" bindinput="onEditNoteInput" />
+      <picker mode="date" value="{{editDate}}" bindchange="onEditDateChange">
+        <view class="pickerLine">日期：{{editDate}}</view>
+      </picker>
+      <view class="twoCols">
+        <picker range="{{priorityOptions}}" range-key="label" value="{{editPriorityIndex}}" bindchange="onEditPriorityChange">
+          <view class="pickerLine">优先级：{{priorityOptions[editPriorityIndex].icon}} {{priorityOptions[editPriorityIndex].label}}</view>
+        </picker>
+        <picker range="{{categoryOptions}}" range-key="label" value="{{editCategoryIndex}}" bindchange="onEditCategoryChange">
+          <view class="pickerLine">分类：{{categoryOptions[editCategoryIndex].label}}</view>
+        </picker>
+      </view>
+      <picker range="{{users}}" range-key="name" value="{{editAssigneeIndex}}" bindchange="onEditAssigneeChange">
+        <view class="pickerLine">负责人：{{users[editAssigneeIndex].name || user.name || '我'}}</view>
+      </picker>
+      <view class="actions">
+        <button class="secondary" disabled="{{submitting}}" bindtap="cancelEdit">取消</button>
+        <button class="primary" loading="{{submitting}}" disabled="{{submitting}}" bindtap="saveEdit">{{submitting ? '保存中...' : '保存修改'}}</button>
+      </view>
+    </view>
+
+    <view class="taskList">
+      <view wx:if="{{tasks.length === 0 && !loading}}" class="empty glassCard">
+        <view class="emptyIcon">☁️</view>
+        <view class="emptyTitle">暂无事项</view>
+        <view class="muted">当前筛选下没有事项。换个日期、负责人或新建一个任务。</view>
+      </view>
+
+      <view wx:for="{{tasks}}" wx:key="_id" class="taskCard {{item.completedAt ? 'done' : ''}} {{item.isOverdue ? 'overdue' : ''}}">
+        <view class="taskAccent {{item.priorityClass}}"></view>
+        <view class="taskContent">
+          <view class="taskTop">
+            <view class="taskTitle">{{item.title}}</view>
+            <text wx:if="{{item.completedAt}}" class="statusBadge doneBadge">已完成</text>
+            <text wx:elif="{{item.isOverdue}}" class="statusBadge overdueBadge">已逾期</text>
+            <text wx:elif="{{item.isToday}}" class="statusBadge todayBadge">今天</text>
+          </view>
+          <view class="tagRow">
+            <text class="tag {{item.priorityClass}}">{{item.priorityIcon}} {{item.priorityLabel}}</text>
+            <text class="tag"># {{item.categoryLabel}}</text>
+            <text class="tag">{{item.assigneeName}}</text>
+          </view>
+          <view class="note">{{item.note || '无备注'}}</view>
+          <view class="meta">{{item.date}} · 创建人 {{item.creatorName}}</view>
+          <view class="actions">
+            <button class="secondary" disabled="{{submitting}}" wx:if="{{item.assigneeOpenId === user.openid || canCompleteOther}}" data-task="{{item}}" bindtap="toggleComplete">{{item.completedAt ? '取消完成' : '完成'}}</button>
+            <button class="secondary" disabled="{{submitting}}" wx:if="{{item.creatorOpenId === user.openid || canEditAll}}" data-task="{{item}}" bindtap="startEdit">编辑</button>
+            <button class="danger" disabled="{{submitting}}" wx:if="{{canDeleteTask}}" data-id="{{item._id}}" bindtap="removeTask">删除</button>
+          </view>
+        </view>
+      </view>
+    </view>
+
+  </block>
+</view>

@@ -1,0 +1,475 @@
+page {
+  background: linear-gradient(180deg, #f5f7fb 0%, #eef4f1 44%, #f8f3ea 100%);
+}
+.dashboard {
+  min-height: 100vh;
+  padding: 28rpx;
+  box-sizing: border-box;
+}
+.heroPanel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 38rpx;
+  padding: 34rpx;
+  color: #fff;
+  background: linear-gradient(135deg, #172821 0%, #276b5a 48%, #f0a84f 145%);
+  box-shadow: 0 26rpx 60rpx rgba(23, 40, 33, 0.22);
+  margin-bottom: 24rpx;
+}
+.heroGlow {
+  position: absolute;
+  right: -120rpx;
+  top: -120rpx;
+  width: 300rpx;
+  height: 300rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.18);
+  filter: blur(4rpx);
+}
+.heroTop {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 24rpx;
+  align-items: flex-start;
+}
+.eyebrow {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.68);
+  letter-spacing: 4rpx;
+}
+.heroTitle {
+  font-size: 48rpx;
+  line-height: 1.14;
+  font-weight: 900;
+  margin: 12rpx 0;
+  max-width: 430rpx;
+}
+.heroSub {
+  color: rgba(255, 255, 255, 0.74);
+  font-size: 24rpx;
+}
+.dateChip {
+  background: rgba(255, 255, 255, 0.16);
+  border: 1rpx solid rgba(255, 255, 255, 0.24);
+  border-radius: 999rpx;
+  padding: 14rpx 20rpx;
+  font-size: 24rpx;
+  backdrop-filter: blur(16rpx);
+  white-space: nowrap;
+}
+.progressTrack {
+  position: relative;
+  height: 12rpx;
+  border-radius: 99rpx;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.18);
+  margin-top: 34rpx;
+}
+.progressBar {
+  height: 100%;
+  border-radius: 99rpx;
+  background: linear-gradient(90deg, #fff6c7, #84f0c7);
+}
+.glassCard {
+  background: rgba(255, 255, 255, 0.74);
+  border: 1rpx solid rgba(255, 255, 255, 0.76);
+  border-radius: 32rpx;
+  box-shadow: 0 18rpx 48rpx rgba(45, 63, 54, 0.09);
+  padding: 28rpx;
+  margin-bottom: 24rpx;
+  backdrop-filter: blur(18rpx);
+}
+.pending {
+  border-color: rgba(224, 87, 79, 0.25);
+  background: rgba(255, 246, 243, 0.9);
+}
+.metricGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+}
+.metricCard {
+  border-radius: 26rpx;
+  padding: 22rpx 10rpx;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 12rpx 34rpx rgba(45, 63, 54, 0.07);
+}
+.metricPrimary {
+  background: linear-gradient(180deg, #e8fff5, #ffffff);
+}
+.metricCard.urgent {
+  background: linear-gradient(180deg, #fff2e8, #ffffff);
+}
+.metricCard.overdueMetric {
+  background: linear-gradient(180deg, #fff0ed, #ffffff);
+}
+.metricNum {
+  font-size: 42rpx;
+  font-weight: 900;
+  color: #1f6b57;
+}
+.metricCard.urgent .metricNum,
+.metricCard.overdueMetric .metricNum {
+  color: #d45b36;
+}
+.metricText {
+  margin-top: 4rpx;
+  color: #7b867f;
+  font-size: 22rpx;
+}
+.toolbar {
+  padding: 20rpx;
+}
+.searchRow {
+  display: flex;
+  gap: 14rpx;
+  align-items: center;
+}
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border-radius: 999rpx;
+  padding: 18rpx 24rpx;
+  box-sizing: border-box;
+  font-size: 26rpx;
+}
+.miniPrimary,
+.ghostMini {
+  min-width: 118rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  font-size: 24rpx;
+  padding: 0 22rpx;
+}
+.miniPrimary {
+  background: #172821;
+  color: #fff;
+}
+.ghostMini {
+  background: transparent;
+  color: #607069;
+}
+.filterRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 16rpx;
+}
+.filterChip {
+  background: #eef6f2;
+  color: #2d6b5c;
+  border-radius: 999rpx;
+  padding: 14rpx 22rpx;
+  font-size: 24rpx;
+}
+.glassTabs {
+  display: flex;
+  padding: 8rpx;
+  gap: 8rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.64);
+  margin-bottom: 24rpx;
+  box-shadow: inset 0 0 0 1rpx rgba(255, 255, 255, 0.8);
+}
+.glassTabs button {
+  flex: 1;
+  height: 72rpx;
+  line-height: 72rpx;
+  background: transparent;
+  color: #6f7a74;
+  font-size: 24rpx;
+  border: 0;
+  padding: 0 8rpx;
+}
+.glassTabs button.overdueActive {
+  background: linear-gradient(135deg, #ad4e3f, #172821);
+}
+.glassTabs button.active {
+  background: #172821;
+  color: #fff;
+  box-shadow: 0 10rpx 28rpx rgba(23, 40, 33, 0.16);
+}
+.sectionTitle {
+  font-size: 32rpx;
+  font-weight: 850;
+  color: #172821;
+}
+.small {
+  font-size: 24rpx;
+  margin-top: 6rpx;
+}
+.formHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+.spark {
+  font-size: 42rpx;
+  color: #e7a13d;
+}
+.formCard input,
+.formCard textarea,
+.formCard picker,
+.formCard button {
+  margin-top: 16rpx;
+}
+.formCard textarea {
+  width: 100%;
+  min-height: 132rpx;
+}
+.twoCols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14rpx;
+}
+.pickerLine {
+  background: #fff;
+  border: 1rpx solid rgba(40, 70, 59, 0.09);
+  border-radius: 22rpx;
+  padding: 20rpx;
+  color: #283a34;
+  font-size: 25rpx;
+}
+.bigButton {
+  height: 88rpx;
+  line-height: 88rpx;
+  font-weight: 800;
+  box-shadow: 0 16rpx 36rpx rgba(31, 107, 87, 0.22);
+}
+.noticeBoard {
+  padding: 26rpx;
+  border-color: rgba(240, 168, 79, 0.22);
+  background: linear-gradient(180deg, rgba(255, 250, 240, 0.92), rgba(255,255,255,0.72));
+}
+.noticeHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18rpx;
+  margin-bottom: 18rpx;
+}
+.unreadPill, .readPill {
+  flex: 0 0 auto;
+  border-radius: 999rpx;
+  padding: 10rpx 16rpx;
+  font-size: 22rpx;
+  font-weight: 800;
+}
+.unreadPill { background: #fff0d8; color: #b66a11; }
+.readPill { background: #e8f6ef; color: #1f7a5d; }
+.noticeEmpty {
+  padding: 30rpx;
+  text-align: center;
+  color: #87918c;
+  background: rgba(255,255,255,.62);
+  border-radius: 24rpx;
+}
+.noticeItem {
+  position: relative;
+  overflow: hidden;
+  padding: 24rpx;
+  border-radius: 28rpx;
+  background: rgba(255,255,255,.82);
+  border: 1rpx solid rgba(40,70,59,.08);
+  box-shadow: 0 12rpx 28rpx rgba(45,63,54,.06);
+  margin-top: 16rpx;
+}
+.noticeItem::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 8rpx;
+  background: #7db99f;
+}
+.noticeItem.pinned::before { background: #f0a84f; }
+.noticeItem.unread { border-color: rgba(240, 168, 79, .28); }
+.noticeItem.read { opacity: .78; }
+.noticeTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+.noticeTitle {
+  flex: 1;
+  min-width: 0;
+  color: #172821;
+  font-size: 31rpx;
+  line-height: 1.35;
+  font-weight: 900;
+}
+.pinBadge, .readBadge {
+  border-radius: 999rpx;
+  padding: 6rpx 12rpx;
+  font-size: 20rpx;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.pinBadge { background: #fff0d8; color: #b66a11; }
+.readBadge { background: #fff1ee; color: #d84c3f; }
+.readBadge.done { background: #e8f6ef; color: #1f7a5d; }
+.noticeContent {
+  margin-top: 14rpx;
+  color: #53635b;
+  line-height: 1.65;
+  font-size: 26rpx;
+}
+.noticeMeta {
+  margin-top: 12rpx;
+  color: #8a958f;
+  font-size: 22rpx;
+}
+.noticeActions {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 18rpx;
+}
+.noticeActions button {
+  flex: 1;
+  height: 68rpx;
+  line-height: 68rpx;
+  font-size: 23rpx;
+}
+.noticeDelete { flex: 0 0 150rpx !important; }
+.noticeCreateCard {
+  border-color: rgba(31, 107, 87, 0.14);
+}
+.inlineCheck {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-top: 16rpx;
+  color: #53635b;
+  font-size: 25rpx;
+}
+.editCard {
+  border: 2rpx solid rgba(31, 107, 87, 0.18);
+}
+.taskList {
+  padding-bottom: 28rpx;
+}
+.taskCard {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  background: rgba(255, 255, 255, 0.84);
+  border-radius: 32rpx;
+  box-shadow: 0 18rpx 48rpx rgba(45, 63, 54, 0.08);
+  margin-bottom: 22rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.78);
+}
+.taskAccent {
+  width: 12rpx;
+  flex: 0 0 12rpx;
+  background: #79b79d;
+}
+.taskAccent.priority-low { background: #8bc89b; }
+.taskAccent.priority-normal { background: #5fae93; }
+.taskAccent.priority-high { background: #f0a84f; }
+.taskAccent.priority-urgent { background: #e0574f; }
+.taskContent {
+  flex: 1;
+  min-width: 0;
+  padding: 28rpx;
+}
+.taskTop {
+  display: flex;
+  justify-content: space-between;
+  gap: 18rpx;
+  align-items: flex-start;
+}
+.taskTitle {
+  flex: 1;
+  min-width: 0;
+  font-size: 34rpx;
+  line-height: 1.35;
+  font-weight: 850;
+  color: #172821;
+}
+.statusBadge,
+.tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999rpx;
+  white-space: nowrap;
+}
+.statusBadge {
+  padding: 7rpx 14rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+.doneBadge { background: #e8f6ef; color: #1f7a5d; }
+.todayBadge { background: #eef2ff; color: #4b5bb6; }
+.overdueBadge { background: #fff0ed; color: #d84c3f; }
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 18rpx;
+}
+.tag {
+  padding: 8rpx 14rpx;
+  background: #f1f5f3;
+  color: #5c6862;
+  font-size: 22rpx;
+}
+.tag.priority-low { background: #edf9ef; color: #3f8a52; }
+.tag.priority-normal { background: #eaf7f2; color: #26735e; }
+.tag.priority-high { background: #fff5e3; color: #b66a11; }
+.tag.priority-urgent { background: #fff0ed; color: #d84c3f; }
+.note {
+  margin: 18rpx 0 12rpx;
+  color: #63706a;
+  line-height: 1.65;
+  font-size: 26rpx;
+}
+.meta {
+  color: #8a958f;
+  font-size: 23rpx;
+}
+.taskCard.done {
+  opacity: 0.72;
+}
+.taskCard.done .taskTitle {
+  text-decoration: line-through;
+  color: #7c8982;
+}
+.taskCard.overdue {
+  border-color: rgba(224, 87, 79, 0.18);
+}
+.actions {
+  display: flex;
+  gap: 14rpx;
+  margin-top: 22rpx;
+}
+.actions button {
+  flex: 1;
+  min-width: 0;
+  height: 70rpx;
+  line-height: 70rpx;
+  font-size: 24rpx;
+  padding-left: 8rpx;
+  padding-right: 8rpx;
+}
+.empty {
+  text-align: center;
+  color: #7b867f;
+  padding: 46rpx 28rpx;
+}
+.emptyIcon {
+  font-size: 54rpx;
+  margin-bottom: 14rpx;
+}
+.emptyTitle {
+  color: #172821;
+  font-size: 34rpx;
+  font-weight: 900;
+  margin-bottom: 10rpx;
+}

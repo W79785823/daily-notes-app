@@ -1,0 +1,26 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/users/users",
+    "pages/about/about"
+  ],
+  "window": {
+    "navigationBarTitleText": "每日事项",
+    "navigationBarBackgroundColor": "#f7f3ea",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f7f3ea"
+  },
+  "tabBar": {
+    "color": "#8b8173",
+    "selectedColor": "#2f6f5e",
+    "backgroundColor": "#fffaf0",
+    "borderStyle": "white",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "事项" },
+      { "pagePath": "pages/users/users", "text": "人员" },
+      { "pagePath": "pages/about/about", "text": "关于" }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MEMBER
+  COLLABORATOR
+  ADMIN
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model User {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  loginName   String?  @unique
+  passwordHash String?
+  role        Role     @default(MEMBER)
+  permissions String[] @default([])
+  active      Boolean  @default(true)
+  wechatOpenId String?  @unique
+  wechatUnionId String?
+  lastLoginAt  DateTime?
+  sessionVersion Int @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  createdTasks  Task[] @relation("TaskCreator")
+  assignedTasks Task[] @relation("TaskAssignee")
+  completedTasks Task[] @relation("TaskCompleter")
+  auditLogs AuditLog[]
+  announcements Announcement[]
+}
+
+model Task {
+  id            String    @id @default(cuid())
+  title         String
+  note          String?
+  priority      Priority  @default(NORMAL)
+  date          String
+  creatorId     String
+  assigneeId    String
+  teamVisible   Boolean   @default(false)
+  completedAt   DateTime?
+  completedById String?
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  creator     User  @relation("TaskCreator", fields: [creatorId], references: [id])
+  assignee    User  @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  completedBy User? @relation("TaskCompleter", fields: [completedById], references: [id])
+  auditLogs   AuditLog[]
+
+  @@index([date])
+  @@index([priority])
+  @@index([assigneeId])
+  @@index([creatorId])
+  @@index([teamVisible])
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  pinned      Boolean  @default(false)
+  authorId    String
+  deletedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([createdAt])
+  @@index([pinned])
+}
+
+model LoginAttempt {
+  id            String   @id @default(cuid())
+  identifier    String   @unique
+  failedCount   Int      @default(0)
+  lockedUntil   DateTime?
+  lastAttemptAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([lockedUntil])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  detail    Json?
+  userId    String
+  taskId    String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  task Task? @relation(fields: [taskId], references: [id])
+}
+

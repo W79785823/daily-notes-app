@@ -1,0 +1,24 @@
+{
+  "description": "每日事项小便签 - 微信云开发版",
+  "cloudfunctionRoot": "cloudfunctions/",
+  "miniprogramRoot": "miniprogram/",
+  "compileType": "miniprogram",
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "coverView": true,
+    "lazyloadPlaceholderEnable": false,
+    "preloadBackgroundData": false,
+    "autoAudits": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "useIsolateContext": true,
+    "nodeModules": false
+  },
+  "appid": "wx5946232a8e85fce4",
+  "projectname": "daily-notes-cloud-miniprogram",
+  "condition": {}
+}

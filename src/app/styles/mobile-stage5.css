@@ -1,0 +1,68 @@
+/* Stage 5: mobile app polish */
+@media (max-width: 680px) {
+  button,
+  a,
+  summary,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  .taskCard,
+  .modernUserRow,
+  .announcementItem {
+    scroll-margin-top: 76px;
+  }
+
+  .taskActions,
+  .editActions,
+  .approvalFields {
+    gap: 8px;
+  }
+
+  .taskActions button,
+  .editActions button,
+  .fullButton,
+  .approveButton,
+  .smallWarningButton,
+  .textDangerButton {
+    min-height: 44px;
+  }
+
+  .editBox,
+  .memberEditBody,
+  .toolBody,
+  .resetPasswordForm {
+    border-radius: 18px;
+  }
+
+  .announcementDangerZone {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .announcementDangerZone small {
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .textDangerButton {
+    border: 0;
+    border-radius: 14px;
+    padding: 0 14px;
+    color: #9f352f;
+    background: rgba(200, 65, 55, .1);
+    font-weight: 950;
+  }
+
+  .compactControlDock {
+    position: sticky;
+    top: 8px;
+    z-index: 15;
+  }
+}

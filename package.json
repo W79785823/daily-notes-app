@@ -1,0 +1,34 @@
+{
+  "name": "daily-notes-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "公司内部每日事项小便签 MVP",
+  "scripts": {
+    "dev": "next dev -H 0.0.0.0",
+    "build": "next build",
+    "start": "next start -H 0.0.0.0",
+    "test": "vitest run",
+    "prisma": "prisma",
+    "db:push": "node -e \"console.error(\\'生产环境不要直接运行 prisma db push；请看 docs/database-migrations.md\\'); process.exit(1)\"",
+    "check:prod": "node scripts/check-production-env.js",
+    "backup:db": "bash scripts/backup-database.sh",
+    "deploy:prod": "bash scripts/deploy-production.sh",
+    "db:generate": "prisma generate",
+    "reminder:daily": "node scripts/daily-reminder.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "prisma": "^6.19.3",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

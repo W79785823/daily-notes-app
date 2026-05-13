@@ -1,0 +1,94 @@
+/* Stage 2: mobile web productization */
+.manageEntryCard p,
+.manageHero p {
+  margin: 8px 0 16px;
+  color: var(--muted);
+  line-height: 1.75;
+}
+.manageEntryButton { text-align: center; text-decoration: none; }
+.manageShell { padding-bottom: 92px; }
+.manageHero {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.manageHero h1 {
+  margin: 6px 0 0;
+  font-size: clamp(32px, 5vw, 56px);
+  letter-spacing: -1.8px;
+}
+.manageGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 390px;
+  gap: 16px;
+  align-items: start;
+}
+.compactAnnouncementList { max-height: 420px; overflow: auto; padding-right: 2px; }
+.mainStack,
+.sideStack {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+.mainStack > .workspaceCard,
+.sideStack > .workspaceCard,
+.manageAccountCard,
+.managePublishCard {
+  width: 100%;
+  box-sizing: border-box;
+}
+.manageAccountCard > summary,
+.managePublishCard > summary,
+.addMemberCard > summary {
+  width: 100%;
+  box-sizing: border-box;
+}
+.mobileBottomNav { display: none; }
+
+@media (max-width: 900px) {
+  .manageGrid { grid-template-columns: 1fr; }
+  .manageHero { align-items: flex-start; flex-direction: column; }
+}
+
+@media (max-width: 680px) {
+  .shell { padding-bottom: 94px; }
+  .manageShell { padding-bottom: 104px; }
+  .manageEntryCard { order: -1; }
+  .manageHero { border-radius: 22px; padding: 16px; }
+  .manageHero h1 { font-size: 34px; }
+  .manageHero p { font-size: 14px; }
+  .compactAnnouncementList { max-height: none; }
+  .mobileBottomNav {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    z-index: 50;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    padding: 8px;
+    border-radius: 22px;
+    background: rgba(255,253,249,.94);
+    border: 1px solid rgba(44,74,62,.12);
+    box-shadow: 0 18px 50px rgba(20,35,29,.18);
+    backdrop-filter: blur(16px);
+  }
+  .mobileBottomNav a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    border-radius: 16px;
+    color: #607069;
+    font-size: 13px;
+    font-weight: 950;
+  }
+  .mobileBottomNav a.active {
+    color: #fffaf0;
+    background: linear-gradient(135deg, var(--primary), var(--primary-2));
+    box-shadow: 0 10px 22px rgba(36,76,59,.24);
+  }
+}

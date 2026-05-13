@@ -1,0 +1,33 @@
+.pwaStatusToast,
+.pwaPullHint {
+  position: fixed;
+  left: 50%;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  z-index: 80;
+  transform: translateX(-50%);
+  max-width: min(92vw, 380px);
+  padding: 10px 14px;
+  border: 1px solid rgba(255,255,255,.72);
+  border-radius: 999px;
+  box-shadow: 0 14px 36px rgba(26, 42, 35, .18);
+  backdrop-filter: blur(14px);
+  color: #244c3b;
+  background: rgba(255, 253, 248, .94);
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.pwaStatusToast.success { color: #1e6b43; background: rgba(235, 250, 241, .95); }
+.pwaStatusToast.warning { color: #8a4d14; background: rgba(255, 246, 225, .96); }
+.pwaStatusToast.info { color: #244c3b; }
+
+.pwaPullHint {
+  top: calc(env(safe-area-inset-top, 0px) + 54px);
+  background: rgba(36, 76, 59, .94);
+  color: #fffaf0;
+}
+
+@media (min-width: 760px) {
+  .pwaPullHint { display: none; }
+}

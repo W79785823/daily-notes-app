@@ -1,0 +1,142 @@
+/* Stage 6: lightweight mobile simplification */
+@media (min-width: 681px) {
+  .mobileCreateSummary {
+    display: none;
+  }
+}
+
+@media (max-width: 680px) {
+  .mobileCreateDetails {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .mobileCreateSummary {
+    min-height: 58px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .mobileCreateSummary::-webkit-details-marker {
+    display: none;
+  }
+
+  .mobileCreateSummary span {
+    display: grid;
+    gap: 2px;
+  }
+
+  .mobileCreateSummary b {
+    color: var(--ink);
+    font-size: 16px;
+  }
+
+  .mobileCreateSummary small {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .mobileCreateSummary em {
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(47, 106, 79, .1);
+    color: var(--brand);
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .mobileCreateDetails[open] .mobileCreateSummary {
+    border-bottom: 1px solid rgba(47, 106, 79, .1);
+  }
+
+  .mobileCreateDetails[open] .mobileCreateSummary em::after {
+    content: ' · 收起';
+  }
+
+  .mobileCreateBody {
+    padding: 14px;
+  }
+
+  .desktopCreateHead {
+    display: none;
+  }
+
+  .modernForm {
+    gap: 10px;
+  }
+
+  .modernForm input,
+  .modernForm select,
+  .modernForm textarea {
+    min-height: 46px;
+    font-size: 16px;
+  }
+
+  .modernForm textarea {
+    min-height: 72px;
+  }
+
+  .taskBoard {
+    padding: 14px 12px;
+  }
+
+  .taskItem {
+    gap: 10px;
+    padding: 13px 12px;
+    border-radius: 18px;
+  }
+
+  .taskTitleRow {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .taskTitleRow strong {
+    font-size: 16px;
+    line-height: 1.35;
+  }
+
+  .taskMeta {
+    gap: 6px;
+  }
+
+  .taskMeta span {
+    font-size: 12px;
+  }
+
+  .modernActions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .modernActions button {
+    min-height: 42px;
+    padding: 0 10px;
+    border-radius: 14px;
+  }
+
+  .statusTabs {
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+
+  .statusTabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .statusTabs .tab {
+    min-width: 88px;
+    flex: 0 0 auto;
+    padding: 9px 11px;
+  }
+}

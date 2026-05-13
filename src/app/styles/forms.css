@@ -1,0 +1,545 @@
+
+@media (max-width: 680px) {
+  .heroActions {
+    display: none;
+  }
+  .appHero {
+    padding: 14px 14px 12px;
+    border-radius: 22px;
+  }
+  .kicker {
+    padding: 6px 9px;
+    font-size: 11px;
+  }
+  .heroTitle {
+    margin: 10px 0 6px;
+    line-height: 1.04;
+  }
+  .heroTitle::after {
+    width: 96px;
+    margin-top: 8px;
+  }
+  .titleLineTop,
+  .titleLineBottom {
+    font-size: clamp(27px, 8.2vw, 36px);
+  }
+  .heroCopy p {
+    display: none;
+  }
+  .heroPanel {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 17px;
+  }
+  .panelTop {
+    margin-bottom: 8px;
+  }
+  .miniMetrics span {
+    padding: 7px 6px;
+    border-radius: 12px;
+  }
+  .statsGrid {
+    display: none;
+  }
+  .compactControlDock {
+    margin-top: 8px;
+  }
+  .compactControlDock .statusTabs {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    overflow: visible;
+  }
+  .compactControlDock .tab {
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+    min-height: 38px;
+    padding: 7px 5px;
+    border-radius: 13px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .compactControlDock .tab b {
+    width: 20px;
+    min-width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+  .filterDetails > summary {
+    min-height: 36px;
+    padding: 0 10px;
+  }
+  .filterDetails > summary span {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  .mobileQuickCreate {
+    display: block;
+    margin-top: 9px;
+    padding: 13px;
+    border-color: rgba(47,106,79,.18);
+  }
+  .mobileQuickCreate .sectionHead {
+    margin-bottom: 8px;
+  }
+  .mobileQuickCreate .sectionHead h2 {
+    font-size: 18px;
+  }
+  .mobileQuickCreate .modernForm {
+    gap: 8px;
+  }
+  .mobileQuickCreate textarea {
+    min-height: 58px;
+  }
+  .mobileQuickCreate .fullButton {
+    min-height: 42px;
+  }
+  .contentGrid {
+    margin-top: 9px;
+  }
+  .sideStack > .createCard {
+    display: none;
+  }
+  .announcementTop {
+    order: 1;
+  }
+  .taskBoard {
+    order: 0;
+  }
+  .mainStack {
+    display: flex;
+    flex-direction: column;
+  }
+  .taskBoard.workspaceCard {
+    padding: 13px;
+  }
+  .taskBoard .sectionHead {
+    margin-bottom: 9px;
+  }
+  .taskBoard .sectionHead span:not(.sectionLabel) {
+    display: none;
+  }
+  .modernList {
+    gap: 9px;
+  }
+  .taskItem {
+    grid-template-columns: 4px minmax(0, 1fr);
+    gap: 9px;
+    padding: 11px;
+    border-radius: 17px;
+  }
+  .taskItem p {
+    display: none;
+  }
+  .taskTitleRow {
+    display: grid;
+    gap: 7px;
+  }
+  .taskTitleRow strong {
+    font-size: 15px;
+    line-height: 1.38;
+  }
+  .tagRow {
+    justify-content: flex-start;
+    gap: 5px;
+  }
+  .tag {
+    padding: 3px 7px;
+    font-size: 10px;
+  }
+  .tagRow .priorityTag {
+    order: -1;
+  }
+  .taskMeta {
+    margin-top: 7px;
+    gap: 5px;
+  }
+  .taskMeta span {
+    padding: 3px 7px;
+    font-size: 10px;
+  }
+  .taskMeta span:nth-child(3),
+  .taskMeta span:nth-child(4) {
+    display: none;
+  }
+  .modernActions {
+    grid-column: 2;
+    display: flex;
+    gap: 7px;
+    margin-top: 8px;
+  }
+  .modernActions form {
+    flex: 1 1 0;
+  }
+  .completeButton, .ghostButton, .deleteButton {
+    min-height: 38px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+  .workspaceCard.publishNoticeCard,
+  .calendarCard,
+  .insightCard,
+  .peopleCard,
+  .timelineCard,
+  .approvalCard {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 390px) {
+  .compactControlDock .statusTabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Web member management: admins add members directly now */
+.addMemberCard {
+  border-color: rgba(47,106,79,.18);
+  background: linear-gradient(180deg, rgba(237,248,241,.92), rgba(255,255,255,.75));
+}
+.addMemberForm {
+  display: grid;
+  gap: 10px;
+}
+.addMemberForm input,
+.addMemberForm select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(44,74,62,.12);
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,.9);
+  color: var(--ink);
+  font: inherit;
+}
+.addMemberPermissionBox {
+  background: rgba(255,255,255,.62);
+}
+.formHint {
+  margin: 10px 0 0;
+  color: #738178;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+@media (max-width: 680px) {
+  .addMemberCard {
+    background: var(--mobile-card);
+  }
+  .addMemberForm {
+    gap: 8px;
+  }
+  .addMemberForm input,
+  .addMemberForm select {
+    min-height: 44px;
+    border-radius: 13px;
+  }
+  .addMemberPermissionBox .modernChecks {
+    max-height: none;
+  }
+}
+
+/* Fix permission checkboxes on mobile/member forms: scoped input styles must not stretch checkboxes */
+.addMemberForm .modernChecks {
+  overflow: visible;
+}
+.addMemberForm .modernChecks label,
+.approvalPermissionBox .modernChecks label {
+  min-height: 38px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  color: var(--ink);
+  background: rgba(255,255,255,.82);
+  border: 1px solid rgba(44,74,62,.08);
+}
+.addMemberForm .modernChecks input[type="checkbox"],
+.approvalPermissionBox .modernChecks input[type="checkbox"] {
+  width: 16px;
+  min-width: 16px;
+  height: 16px;
+  min-height: 16px;
+  flex: 0 0 16px;
+  padding: 0;
+  border-radius: 4px;
+  accent-color: #2f6a4f;
+}
+
+@media (max-width: 680px) {
+  .approvalPermissionBox .modernChecks,
+  .memberPermissionBox .modernChecks,
+  .addMemberPermissionBox .modernChecks {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* Mobile-first low-frequency tools: keep admin actions folded away */
+.collapsibleToolCard {
+  padding: 0;
+  overflow: hidden;
+}
+.toolSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px;
+  list-style: none;
+}
+.toolSummary::-webkit-details-marker { display: none; }
+.toolSummary span {
+  display: grid;
+  gap: 3px;
+}
+.toolSummary b {
+  color: var(--ink);
+  font-size: 17px;
+}
+.toolSummary small {
+  color: #7b887f;
+  font-size: 12px;
+}
+.toolSummary em {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  color: #2f6a4f;
+  background: #e5f3ec;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 950;
+}
+.toolSummary em::after {
+  content: "⌄";
+  transition: .16s ease;
+}
+.collapsibleToolCard[open] .toolSummary em::after {
+  transform: rotate(180deg);
+}
+.toolBody {
+  padding: 0 15px 15px;
+}
+
+@media (min-width: 681px) {
+  .publishNoticeCard.collapsibleToolCard,
+  .addMemberCard.collapsibleToolCard,
+  .manageAccountCard.collapsibleToolCard {
+    padding: 18px;
+  }
+  .publishNoticeCard.collapsibleToolCard .toolSummary,
+  .addMemberCard.collapsibleToolCard .toolSummary,
+  .manageAccountCard.collapsibleToolCard .toolSummary {
+    padding: 0 0 14px;
+    cursor: pointer;
+  }
+  .publishNoticeCard.collapsibleToolCard .toolBody,
+  .addMemberCard.collapsibleToolCard .toolBody,
+  .manageAccountCard.collapsibleToolCard .toolBody {
+    padding: 0;
+  }
+}
+
+@media (max-width: 680px) {
+  .collapsibleToolCard {
+    border-radius: 18px;
+    box-shadow: 0 8px 20px rgba(35,52,44,.06);
+  }
+  .toolSummary {
+    min-height: 50px;
+    padding: 12px 13px;
+  }
+  .toolSummary b {
+    font-size: 15px;
+  }
+  .toolSummary small {
+    display: none;
+  }
+  .toolBody {
+    padding: 0 13px 13px;
+  }
+  .calendarCard,
+  .insightCard,
+  .peopleCard,
+  .timelineCard {
+    display: none;
+  }
+}
+
+/* Login */
+.loginShell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(214,152,72,.22), transparent 34%),
+    linear-gradient(135deg, #f8f1e6, #edf5ef 62%, #e7eee9);
+}
+.loginCard {
+  width: min(100%, 430px);
+  padding: 28px;
+  border-radius: 28px;
+  background: rgba(255,255,255,.86);
+  border: 1px solid rgba(255,255,255,.8);
+  box-shadow: 0 26px 70px rgba(35,52,44,.18);
+}
+.loginKicker {
+  width: fit-content;
+  padding: 7px 11px;
+  border-radius: 999px;
+  color: #2f6a4f;
+  background: #e5f3ec;
+  font-size: 12px;
+  font-weight: 950;
+}
+.loginCard h1 {
+  margin: 18px 0 8px;
+  color: var(--ink);
+  font-size: 34px;
+  letter-spacing: -.04em;
+}
+.loginCard p {
+  margin: 0 0 18px;
+  color: #64736a;
+  line-height: 1.65;
+}
+.loginError {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  color: #8d2d23;
+  background: #fff0e8;
+  font-weight: 850;
+}
+.loginForm {
+  display: grid;
+  gap: 12px;
+}
+.loginForm button {
+  min-height: 46px;
+  border: 0;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(135deg, #244c3b, #2f6a4f);
+  font-weight: 950;
+}
+@media (max-width: 680px) {
+  .loginShell { padding: 14px; align-items: start; padding-top: 13vh; }
+  .loginCard { padding: 22px; border-radius: 24px; }
+  .loginCard h1 { font-size: 30px; }
+}
+
+/* Product polish pass: formal login, clearer empty states, less clutter for members */
+.loginShell {
+  position: relative;
+  overflow: hidden;
+  place-items: center;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(214,152,72,.26), transparent 28%),
+    radial-gradient(circle at 88% 12%, rgba(47,106,79,.20), transparent 30%),
+    linear-gradient(135deg, #fbf7ef 0%, #eef5ef 58%, #e7eee9 100%);
+}
+.loginShell::before {
+  content: "";
+  position: absolute;
+  inset: auto -12% -26% 22%;
+  height: 310px;
+  background: rgba(36,76,59,.08);
+  filter: blur(24px);
+  transform: rotate(-7deg);
+}
+.loginCard {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 460px);
+  padding: 30px;
+  background: rgba(255,253,248,.9);
+  backdrop-filter: blur(18px);
+}
+.loginBrandMark {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 14px;
+  border-radius: 21px;
+  color: #fff8df;
+  background: linear-gradient(145deg, #14231d, #2f6a4f 68%, #d69848);
+  box-shadow: 0 18px 40px rgba(35,52,44,.18);
+  font-weight: 950;
+  letter-spacing: -.04em;
+}
+.loginCard h1 {
+  margin-top: 14px;
+  font-size: 38px;
+}
+.loginHintBox,
+.loginError {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 13px;
+  padding: 11px 13px;
+  border-radius: 16px;
+  line-height: 1.45;
+}
+.loginHintBox {
+  color: #496257;
+  background: #edf7f1;
+  border: 1px solid rgba(47,106,79,.12);
+  font-size: 13px;
+  font-weight: 800;
+}
+.loginError b { color: #8d2d23; }
+.loginError span { color: #9f4b40; font-size: 13px; }
+.loginForm label { font-size: 13px; }
+.loginForm input { min-height: 47px; background: #fffdf9; }
+.loginForm button { min-height: 48px; transition: .16s ease; }
+.loginForm button:hover { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(36,76,59,.18); }
+.emptyState {
+  padding: 22px;
+  background: linear-gradient(180deg, rgba(255,253,248,.76), rgba(244,249,245,.78));
+}
+.emptyState strong::before {
+  content: "✓";
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  margin: 0 auto 8px;
+  border-radius: 16px;
+  color: #2f6a4f;
+  background: #e5f3ec;
+}
+.emptyState a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  margin-top: 6px;
+  padding: 0 13px;
+  border-radius: 999px;
+  color: white;
+  background: #244c3b;
+  font-size: 13px;
+  font-weight: 950;
+}
+.memberStatsGrid {
+  grid-template-columns: repeat(2, 1fr);
+}
+.peopleToolBody { padding-top: 0; }
+.timelineEmpty::before { display: none !important; }
+@media (max-width: 680px) {
+  .loginShell { padding-top: 10vh; }
+  .loginCard { padding: 22px; border-radius: 25px; }
+  .loginBrandMark { width: 54px; height: 54px; border-radius: 18px; }
+  .loginCard h1 { font-size: 32px; }
+  .memberStatsGrid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .emptyState { min-height: 190px; padding: 18px 14px; }
+  .emptyState strong { font-size: 18px; }
+  .peopleToolBody .users { margin-top: 0; }
+}
+
+/* Account settings / password change */

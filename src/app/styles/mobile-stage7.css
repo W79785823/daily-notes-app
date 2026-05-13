@@ -1,0 +1,94 @@
+/* Stage 7: tiny account entry on top-right */
+.mobileAccountMenu {
+  display: none;
+}
+
+@media (max-width: 680px) {
+  .appHero {
+    position: relative;
+  }
+
+  .heroAccountActions {
+    display: none;
+  }
+
+  .mobileAccountMenu {
+    display: block;
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    z-index: 18;
+  }
+
+  .mobileAccountButton {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 999px;
+    color: #fffaf0;
+    background: linear-gradient(135deg, var(--brand), #3f8061);
+    box-shadow: 0 6px 14px rgba(26, 42, 35, .14);
+    font-size: 12px;
+    font-weight: 950;
+    line-height: 1;
+  }
+
+  .accountChipText {
+    display: none;
+  }
+
+  .accountChipMenu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    min-width: 154px;
+    padding: 8px;
+    display: grid;
+    gap: 6px;
+    border: 1px solid rgba(47, 106, 79, .12);
+    border-radius: 18px;
+    background: rgba(255, 253, 248, .98);
+    box-shadow: 0 16px 38px rgba(26, 42, 35, .18);
+  }
+
+  .accountMenuHeader {
+    padding: 4px 8px 2px;
+    display: grid;
+    gap: 2px;
+  }
+
+  .accountMenuHeader b {
+    color: var(--ink);
+    font-size: 13px;
+  }
+
+  .accountMenuHeader small {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .accountChipMenu a,
+  .accountChipMenu button {
+    width: 100%;
+    min-height: 38px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    border: 0;
+    border-radius: 12px;
+    color: var(--ink);
+    background: rgba(47, 106, 79, .07);
+    font-size: 13px;
+    font-weight: 900;
+    text-decoration: none;
+  }
+
+  .accountChipMenu button {
+    color: #9f352f;
+    background: rgba(200, 65, 55, .1);
+  }
+}
