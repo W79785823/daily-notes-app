@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     ...(status === 'todo' ? { completedAt: null } : status === 'done' ? { completedAt: { not: null } } : {}),
     ...(priority !== 'all' ? { priority } : {}),
     ...(assigneeId !== 'all' ? { assigneeId } : {}),
-    ...(keyword ? { OR: [{ title: { contains: keyword } }, { note: { contains: keyword } }] } : {}),
+    ...(keyword ? { OR: [{ title: { contains: keyword, mode: 'insensitive' as const } }, { note: { contains: keyword, mode: 'insensitive' as const } }] } : {}),
     ...taskVisibilityWhere(user),
   };
   const tasks = await prisma.task.findMany({

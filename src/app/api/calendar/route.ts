@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     deletedAt: null,
     ...(assigneeId !== 'all' ? { assigneeId } : {}),
     ...(priority !== 'all' ? { priority } : {}),
-    ...(keyword ? { OR: [{ title: { contains: keyword } }, { note: { contains: keyword } }] } : {}),
+    ...(keyword ? { OR: [{ title: { contains: keyword, mode: 'insensitive' as const } }, { note: { contains: keyword, mode: 'insensitive' as const } }] } : {}),
     ...taskVisibilityWhere(user),
   };
 

@@ -8,20 +8,15 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
   const { id } = await context.params;
   const contentType = request.headers.get('content-type') || '';
   let body: Record<string, unknown> = {};
-  let userId: string | null = null;
   let redirectTo = '';
   let isForm = false;
   if (contentType.includes('application/x-www-form-urlencoded') || contentType.includes('multipart/form-data')) {
     const form = await request.formData();
     body = { completed: form.get('completed') !== 'false' };
-    userId = String(form.get('userId') || '');
     redirectTo = String(form.get('redirectTo') || '/');
     isForm = true;
   } else {
     body = await request.json().catch(() => ({}));
-    const requestUser = await getRequestUser(request);
-    if (!requestUser) return formError({ isForm, redirectTo, errorCode: 'auth.unauthorized', jsonMessage: '请先登录', status: 401 });
-    userId = requestUser.id;
   }
   const user = await getRequestUser(request);
   if (!user) return formError({ isForm, redirectTo, errorCode: 'auth.unauthorized', jsonMessage: '请先登录', status: 401 });

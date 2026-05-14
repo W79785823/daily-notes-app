@@ -28,6 +28,8 @@ export function canActOnTask(user: AuthUser | null | undefined, task: TaskAccess
 
   switch (action) {
     case 'view':
+      // `task.view_all` is kept as the stored permission key for compatibility,
+      // but the product meaning is “查看团队事项”: only team-visible tasks are added.
       return task.creatorId === user.id || task.assigneeId === user.id || (!!task.teamVisible && hasPermission(user, 'task.view_all'));
     case 'edit':
       return task.creatorId === user.id;
