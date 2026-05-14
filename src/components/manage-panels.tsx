@@ -29,7 +29,7 @@ const ROLE_LABELS: Record<Role, string> = {
 const PERMISSION_LABELS: Record<Permission, string> = {
   'task.create': '创建事项',
   'task.assign': '指派他人',
-  'task.view_all': '查看全部事项',
+  'task.view_all': '查看团队事项',
   'announcement.create': '发布公告',
   'user.manage': '管理人员',
   'permission.manage': '管理权限',

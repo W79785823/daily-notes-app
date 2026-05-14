@@ -32,7 +32,7 @@ describe('事项流程', () => {
     expect(normal.priority).toBe('NORMAL');
   });
 
-  it('普通成员只能看到自己创建、自己负责，或有查看全部权限时看到团队事项', () => {
+  it('普通成员只能看到自己创建、自己负责，或有查看团队事项权限时看到团队事项', () => {
     const teamTask = createTask({ title: '别人指派给自己', date: '2026-05-11', creator: admin, assigneeId: alice.id });
     const ownPrivateTask = createTask({ title: '自己给自己', date: '2026-05-11', creator: alice, assigneeId: alice.id });
     const bobPrivateTask = createTask({ title: '别人自己的私密事项', date: '2026-05-11', creator: bob, assigneeId: bob.id });
@@ -70,7 +70,7 @@ describe('事项流程', () => {
     expect(() => completeTask(task, alice, new Date('2026-05-11T09:00:00Z'))).toThrow('没有权限完成该事项');
   });
 
-  it('只给查看全部权限时，只能额外看到团队事项，不能看到别人自己指派自己的私密事项', () => {
+  it('只给查看团队事项权限时，只能额外看到团队事项，不能看到别人自己指派自己的私密事项', () => {
     const viewer: User = { id: 'u-viewer', name: '查看员', role: 'MEMBER', permissions: ['task.view_all'], active: true };
     const ownTask = createTask({ title: '自己创建', date: '2026-05-11', creator: viewer, assigneeId: viewer.id });
     const otherPrivateTask = createTask({ title: '别人自己的私密事项', date: '2026-05-11', creator: admin, assigneeId: admin.id });

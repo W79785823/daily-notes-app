@@ -7,7 +7,7 @@ const permissions = readFileSync('src/lib/permissions.ts', 'utf8');
 const managementForms = readFileSync('src/components/management-forms.tsx', 'utf8');
 const managePanels = readFileSync('src/components/manage-panels.tsx', 'utf8');
 
-describe('查看全部权限不会泄漏编辑/删除别人事项入口', () => {
+describe('查看团队事项权限不会泄漏编辑/删除别人事项入口', () => {
   it('刷新接口返回的操作按钮权限必须直接来自后端，不能用 fallback 旧权限', () => {
     expect(panel).toContain('canEdit: Boolean(task.canEdit)');
     expect(panel).toContain('canDelete: Boolean(task.canDelete)');
