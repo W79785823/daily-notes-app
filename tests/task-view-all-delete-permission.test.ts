@@ -15,17 +15,18 @@ describe('查看全部权限不会泄漏编辑/删除别人事项入口', () => 
     expect(panel).not.toContain('canDelete: fallback?.canDelete ?? Boolean(task.canDelete)');
   });
 
-  it('编辑和删除都只跟创建人有关，不再有额外权限点', () => {
+  it('编辑只跟创建人有关，删除允许创建人或管理员，不再有额外删除权限点', () => {
     const editCase = auth.slice(auth.indexOf("case 'edit':"), auth.indexOf("case 'delete':"));
     const deleteCase = auth.slice(auth.indexOf("case 'delete':"), auth.indexOf("case 'complete':"));
 
     expect(editCase).toContain('task.creatorId === user.id');
+    expect(deleteCase).toContain("user.role === 'ADMIN'");
     expect(deleteCase).toContain('task.creatorId === user.id');
     expect(auth).not.toContain("'task.edit_all'");
     expect(auth).not.toContain("'task.delete'");
   });
 
-  it('权限设置里不再展示编辑全部和删除事项', () => {
+  it('权限设置里不再展示编辑全部、删除事项和完成他人事项', () => {
     expect(permissions).not.toContain("'task.edit_all'");
     expect(permissions).not.toContain("'task.delete'");
     expect(permissions).not.toContain("'task.complete_other'");

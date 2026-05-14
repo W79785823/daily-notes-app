@@ -32,7 +32,7 @@ export function canActOnTask(user: AuthUser | null | undefined, task: TaskAccess
     case 'edit':
       return task.creatorId === user.id;
     case 'delete':
-      return task.creatorId === user.id;
+      return user.role === 'ADMIN' || task.creatorId === user.id;
     case 'complete':
       return task.assigneeId === user.id;
   }
