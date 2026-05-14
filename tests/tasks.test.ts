@@ -32,24 +32,27 @@ describe('事项流程', () => {
     expect(normal.priority).toBe('NORMAL');
   });
 
-  it('普通成员只能看到自己创建或负责的未删除事项', () => {
-    const tasks: Task[] = [
-      createTask({ title: '自己负责', date: '2026-05-11', creator: admin, assigneeId: alice.id }),
-      createTask({ title: '自己创建', date: '2026-05-11', creator: bob, assigneeId: alice.id }),
-      createTask({ title: '别人事项', date: '2026-05-11', creator: admin, assigneeId: bob.id }),
-      { ...createTask({ title: '已删除', date: '2026-05-11', creator: alice, assigneeId: alice.id }), deletedAt: new Date('2026-05-11T01:00:00Z') },
-    ];
+  it('普通成员只能看到自己创建、自己负责，或有查看全部权限时看到团队事项', () => {
+    const teamTask = createTask({ title: '别人指派给自己', date: '2026-05-11', creator: admin, assigneeId: alice.id });
+    const ownPrivateTask = createTask({ title: '自己给自己', date: '2026-05-11', creator: alice, assigneeId: alice.id });
+    const bobPrivateTask = createTask({ title: '别人自己的私密事项', date: '2026-05-11', creator: bob, assigneeId: bob.id });
+    const bobTeamTask = createTask({ title: '别人指派给团队成员', date: '2026-05-11', creator: bob, assigneeId: admin.id });
+    const deletedTask = { ...createTask({ title: '已删除', date: '2026-05-11', creator: alice, assigneeId: alice.id }), deletedAt: new Date('2026-05-11T01:00:00Z') };
+    const tasks: Task[] = [teamTask, ownPrivateTask, bobPrivateTask, bobTeamTask, deletedTask];
+    const viewer: User = { id: 'u-viewer', name: '查看员', role: 'MEMBER', permissions: ['task.view_all'], active: true };
 
-    expect(listVisibleTasks(tasks, alice).map((task) => task.title)).toEqual(['自己负责', '自己创建']);
+    expect(listVisibleTasks(tasks, alice).map((task) => task.title)).toEqual(['别人指派给自己', '自己给自己']);
+    expect(listVisibleTasks(tasks, viewer).map((task) => task.title)).toEqual(['别人指派给自己', '别人指派给团队成员']);
   });
 
-  it('管理员可以看到所有未删除事项', () => {
+  it('管理员也只能额外看到团队事项，看不到别人自己指派自己的私密事项', () => {
     const tasks: Task[] = [
-      createTask({ title: 'A', date: '2026-05-11', creator: alice, assigneeId: alice.id }),
-      createTask({ title: 'B', date: '2026-05-11', creator: bob, assigneeId: bob.id }),
+      createTask({ title: '张三私密', date: '2026-05-11', creator: alice, assigneeId: alice.id }),
+      createTask({ title: '李四指派管理员', date: '2026-05-11', creator: bob, assigneeId: admin.id }),
+      createTask({ title: '管理员私密', date: '2026-05-11', creator: admin, assigneeId: admin.id }),
     ];
 
-    expect(listVisibleTasks(tasks, admin)).toHaveLength(2);
+    expect(listVisibleTasks(tasks, admin).map((task) => task.title)).toEqual(['李四指派管理员', '管理员私密']);
   });
 
   it('负责人可以标记自己的事项完成', () => {
@@ -67,17 +70,19 @@ describe('事项流程', () => {
     expect(() => completeTask(task, alice, new Date('2026-05-11T09:00:00Z'))).toThrow('没有权限完成该事项');
   });
 
-  it('只给查看全部权限时，可以看全部，但只能编辑/删除自己创建的事项', () => {
+  it('只给查看全部权限时，只能额外看到团队事项，不能看到别人自己指派自己的私密事项', () => {
     const viewer: User = { id: 'u-viewer', name: '查看员', role: 'MEMBER', permissions: ['task.view_all'], active: true };
     const ownTask = createTask({ title: '自己创建', date: '2026-05-11', creator: viewer, assigneeId: viewer.id });
-    const otherTask = createTask({ title: '别人创建', date: '2026-05-11', creator: admin, assigneeId: admin.id });
+    const otherPrivateTask = createTask({ title: '别人自己的私密事项', date: '2026-05-11', creator: admin, assigneeId: admin.id });
+    const teamTask = createTask({ title: '别人指派给团队成员', date: '2026-05-11', creator: admin, assigneeId: alice.id });
 
     expect(canActOnTask(viewer, ownTask, 'view')).toBe(true);
-    expect(canActOnTask(viewer, otherTask, 'view')).toBe(true);
+    expect(canActOnTask(viewer, otherPrivateTask, 'view')).toBe(false);
+    expect(canActOnTask(viewer, teamTask, 'view')).toBe(true);
     expect(canActOnTask(viewer, ownTask, 'edit')).toBe(true);
     expect(canActOnTask(viewer, ownTask, 'delete')).toBe(true);
-    expect(canActOnTask(viewer, otherTask, 'edit')).toBe(false);
-    expect(canActOnTask(viewer, otherTask, 'delete')).toBe(false);
+    expect(canActOnTask(viewer, otherPrivateTask, 'edit')).toBe(false);
+    expect(canActOnTask(viewer, otherPrivateTask, 'delete')).toBe(false);
   });
 
   it('管理员可以删除所有事项，但只能编辑自己创建、完成自己负责的事项', () => {

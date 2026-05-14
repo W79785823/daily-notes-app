@@ -28,7 +28,7 @@ export function canActOnTask(user: AuthUser | null | undefined, task: TaskAccess
 
   switch (action) {
     case 'view':
-      return hasPermission(user, 'task.view_all') || !!task.teamVisible || task.creatorId === user.id || task.assigneeId === user.id;
+      return task.creatorId === user.id || task.assigneeId === user.id || (!!task.teamVisible && hasPermission(user, 'task.view_all'));
     case 'edit':
       return task.creatorId === user.id;
     case 'delete':
@@ -75,6 +75,5 @@ export function sanitizeAssignablePermissions(operator: AuthUser | null | undefi
 
 export function taskVisibilityWhere(user: AuthUser | null | undefined) {
   if (!user) return { id: '__no_user__' };
-  if (hasPermission(user, 'task.view_all')) return {};
-  return { OR: [{ teamVisible: true }, { creatorId: user.id }, { assigneeId: user.id }] };
+  return { OR: [{ creatorId: user.id }, { assigneeId: user.id }, ...(hasPermission(user, 'task.view_all') ? [{ teamVisible: true }] : [])] };
 }

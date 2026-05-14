@@ -19,6 +19,7 @@ export type Task = {
   date: string;
   creatorId: string;
   assigneeId: string;
+  teamVisible?: boolean | null;
   completedAt: Date | null;
   completedById: string | null;
   deletedAt: Date | null;
@@ -74,6 +75,7 @@ export function createTask(input: CreateTaskInput): Task {
     date: input.date,
     creatorId: input.creator.id,
     assigneeId: input.assigneeId,
+    teamVisible: input.assigneeId !== input.creator.id,
     completedAt: null,
     completedById: null,
     deletedAt: null,
