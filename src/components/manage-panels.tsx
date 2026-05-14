@@ -30,8 +30,6 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   'task.create': '创建事项',
   'task.assign': '指派他人',
   'task.view_all': '查看全部事项',
-  'task.edit_all': '编辑全部事项',
-  'task.delete': '删除事项',
   'task.complete_other': '完成他人事项',
   'announcement.create': '发布公告',
   'user.manage': '管理人员',

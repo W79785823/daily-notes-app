@@ -4,8 +4,6 @@ export type Permission =
   | 'task.create'
   | 'task.assign'
   | 'task.view_all'
-  | 'task.edit_all'
-  | 'task.delete'
   | 'task.complete_other'
   | 'announcement.create'
   | 'user.manage'
@@ -15,8 +13,6 @@ export const ALL_PERMISSIONS: Permission[] = [
   'task.create',
   'task.assign',
   'task.view_all',
-  'task.edit_all',
-  'task.delete',
   'task.complete_other',
   'announcement.create',
   'user.manage',

@@ -7,7 +7,7 @@ type PermissionGroup = { title: string; hint: string; values: string[] };
 type UserRow = { id: string; name: string; loginName?: string | null; role: string; active: boolean; permissions: string[] };
 
 const permissionGroups: PermissionGroup[] = [
-  { title: '事项权限', hint: '控制事项查看、指派、编辑和删除', values: ['task.create', 'task.assign', 'task.view_all', 'task.edit_all', 'task.delete', 'task.complete_other'] },
+  { title: '事项权限', hint: '控制事项创建、查看、指派和协作完成；自己创建的事项默认可编辑、可删除', values: ['task.create', 'task.assign', 'task.view_all', 'task.complete_other'] },
   { title: '人员权限', hint: '控制成员新增、停用和权限配置', values: ['user.manage', 'permission.manage'] },
   { title: '公告权限', hint: '用于发布团队公告和置顶提醒', values: ['announcement.create'] },
 ];

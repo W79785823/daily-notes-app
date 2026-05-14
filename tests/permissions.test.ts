@@ -14,7 +14,7 @@ describe('权限模型', () => {
 
   it('管理员拥有全部权限点', () => {
     const permissions = defaultPermissionsForRole('ADMIN');
-    const all: Permission[] = ['task.create', 'task.assign', 'task.view_all', 'task.edit_all', 'task.delete', 'task.complete_other', 'announcement.create', 'user.manage', 'permission.manage'];
+    const all: Permission[] = ['task.create', 'task.assign', 'task.view_all', 'task.complete_other', 'announcement.create', 'user.manage', 'permission.manage'];
 
     expect(all.every((permission) => can(permissions, permission))).toBe(true);
   });

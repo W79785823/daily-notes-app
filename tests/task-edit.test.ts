@@ -17,18 +17,16 @@ describe('事项编辑', () => {
     expect(edited.updatedAt.toISOString()).toBe('2026-05-11T10:00:00.000Z');
   });
 
-  it('没有 edit_all 权限的人不能编辑别人创建的事项', () => {
+  it('没有创建人身份的人不能编辑别人创建的事项', () => {
     const task = createTask({ title: '别人事项', date: '2026-05-11', creator: bob, assigneeId: alice.id });
 
     expect(() => editTask(task, alice, { title: '越权修改' })).toThrow('没有权限编辑该事项');
   });
 
-  it('管理员可以改派事项负责人', () => {
+  it('管理员也不能改派别人创建的事项', () => {
     const task = createTask({ title: '需要改派', date: '2026-05-11', creator: alice, assigneeId: alice.id });
 
-    const edited = editTask(task, admin, { assigneeId: bob.id });
-
-    expect(edited.assigneeId).toBe(bob.id);
+    expect(() => editTask(task, admin, { assigneeId: bob.id })).toThrow('没有权限编辑该事项');
   });
 
   it('普通成员不能把事项改派给别人', () => {

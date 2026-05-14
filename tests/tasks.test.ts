@@ -67,21 +67,26 @@ describe('事项流程', () => {
     expect(() => completeTask(task, alice, new Date('2026-05-11T09:00:00Z'))).toThrow('没有权限完成该事项');
   });
 
-  it('只给查看全部权限时，不能删除自己创建或别人创建的事项', () => {
+  it('只给查看全部权限时，可以看全部，但只能编辑/删除自己创建的事项', () => {
     const viewer: User = { id: 'u-viewer', name: '查看员', role: 'MEMBER', permissions: ['task.view_all'], active: true };
     const ownTask = createTask({ title: '自己创建', date: '2026-05-11', creator: viewer, assigneeId: viewer.id });
     const otherTask = createTask({ title: '别人创建', date: '2026-05-11', creator: admin, assigneeId: admin.id });
 
     expect(canActOnTask(viewer, ownTask, 'view')).toBe(true);
     expect(canActOnTask(viewer, otherTask, 'view')).toBe(true);
-    expect(canActOnTask(viewer, ownTask, 'delete')).toBe(false);
+    expect(canActOnTask(viewer, ownTask, 'edit')).toBe(true);
+    expect(canActOnTask(viewer, ownTask, 'delete')).toBe(true);
+    expect(canActOnTask(viewer, otherTask, 'edit')).toBe(false);
     expect(canActOnTask(viewer, otherTask, 'delete')).toBe(false);
   });
 
-  it('只有拥有 delete 权限的人才显示/允许删除事项', () => {
-    const deleter: User = { id: 'u-deleter', name: '删除员', role: 'MEMBER', permissions: ['task.delete'], active: true };
-    const task = createTask({ title: '允许删除', date: '2026-05-11', creator: alice, assigneeId: alice.id });
+  it('管理员默认权限也只能编辑/删除自己创建的事项', () => {
+    const ownTask = createTask({ title: '管理员自己创建', date: '2026-05-11', creator: admin, assigneeId: admin.id });
+    const memberTask = createTask({ title: '成员创建', date: '2026-05-11', creator: alice, assigneeId: alice.id });
 
-    expect(canActOnTask(deleter, task, 'delete')).toBe(true);
+    expect(canActOnTask(admin, ownTask, 'edit')).toBe(true);
+    expect(canActOnTask(admin, ownTask, 'delete')).toBe(true);
+    expect(canActOnTask(admin, memberTask, 'edit')).toBe(false);
+    expect(canActOnTask(admin, memberTask, 'delete')).toBe(false);
   });
 });

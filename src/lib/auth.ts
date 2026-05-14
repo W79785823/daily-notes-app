@@ -30,9 +30,9 @@ export function canActOnTask(user: AuthUser | null | undefined, task: TaskAccess
     case 'view':
       return hasPermission(user, 'task.view_all') || !!task.teamVisible || task.creatorId === user.id || task.assigneeId === user.id;
     case 'edit':
-      return hasPermission(user, 'task.edit_all') || task.creatorId === user.id;
+      return task.creatorId === user.id;
     case 'delete':
-      return hasPermission(user, 'task.delete');
+      return task.creatorId === user.id;
     case 'complete':
       return task.assigneeId === user.id || hasPermission(user, 'task.complete_other');
   }
