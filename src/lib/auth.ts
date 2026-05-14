@@ -34,7 +34,7 @@ export function canActOnTask(user: AuthUser | null | undefined, task: TaskAccess
     case 'delete':
       return task.creatorId === user.id;
     case 'complete':
-      return task.assigneeId === user.id || hasPermission(user, 'task.complete_other');
+      return task.assigneeId === user.id;
   }
 }
 

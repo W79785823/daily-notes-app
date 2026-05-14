@@ -28,8 +28,11 @@ describe('查看全部权限不会泄漏编辑/删除别人事项入口', () => 
   it('权限设置里不再展示编辑全部和删除事项', () => {
     expect(permissions).not.toContain("'task.edit_all'");
     expect(permissions).not.toContain("'task.delete'");
+    expect(permissions).not.toContain("'task.complete_other'");
     expect(managementForms).not.toContain('task.edit_all');
     expect(managementForms).not.toContain('task.delete');
+    expect(managementForms).not.toContain('task.complete_other');
     expect(managePanels).not.toContain('编辑全部事项');
+    expect(managePanels).not.toContain('完成他人事项');
   });
 });

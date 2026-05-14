@@ -80,13 +80,15 @@ describe('事项流程', () => {
     expect(canActOnTask(viewer, otherTask, 'delete')).toBe(false);
   });
 
-  it('管理员默认权限也只能编辑/删除自己创建的事项', () => {
+  it('管理员默认权限也只能编辑/删除自己创建、完成自己负责的事项', () => {
     const ownTask = createTask({ title: '管理员自己创建', date: '2026-05-11', creator: admin, assigneeId: admin.id });
     const memberTask = createTask({ title: '成员创建', date: '2026-05-11', creator: alice, assigneeId: alice.id });
 
     expect(canActOnTask(admin, ownTask, 'edit')).toBe(true);
     expect(canActOnTask(admin, ownTask, 'delete')).toBe(true);
+    expect(canActOnTask(admin, ownTask, 'complete')).toBe(true);
     expect(canActOnTask(admin, memberTask, 'edit')).toBe(false);
     expect(canActOnTask(admin, memberTask, 'delete')).toBe(false);
+    expect(canActOnTask(admin, memberTask, 'complete')).toBe(false);
   });
 });
