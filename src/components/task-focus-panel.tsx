@@ -56,9 +56,9 @@ function taskFromApi(task: Record<string, any>, fallback?: PanelTask, currentUse
     priorityLabel: ({ LOW: '低', NORMAL: '普通', HIGH: '高', URGENT: '紧急' } as Record<string, string>)[String(task.priority || fallback?.priority || 'NORMAL')] || fallback?.priorityLabel || '普通',
     priorityClass: ({ LOW: 'priorityLow', NORMAL: 'priorityNormal', HIGH: 'priorityHigh', URGENT: 'priorityUrgent' } as Record<string, string>)[String(task.priority || fallback?.priority || 'NORMAL')] || fallback?.priorityClass || 'priorityNormal',
     isMine: fallback?.isMine ?? (currentUserId ? task.assigneeId === currentUserId || task.creatorId === currentUserId : false),
-    canComplete: fallback?.canComplete ?? true,
-    canDelete: fallback?.canDelete ?? Boolean(task.canDelete),
-    canEdit: fallback?.canEdit ?? Boolean(task.canEdit),
+    canComplete: Boolean(task.canComplete),
+    canDelete: Boolean(task.canDelete),
+    canEdit: Boolean(task.canEdit),
   };
 }
 

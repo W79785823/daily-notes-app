@@ -32,7 +32,7 @@ export function canActOnTask(user: AuthUser | null | undefined, task: TaskAccess
     case 'edit':
       return hasPermission(user, 'task.edit_all') || task.creatorId === user.id;
     case 'delete':
-      return hasPermission(user, 'task.delete') || task.creatorId === user.id;
+      return hasPermission(user, 'task.delete');
     case 'complete':
       return task.assigneeId === user.id || hasPermission(user, 'task.complete_other');
   }
