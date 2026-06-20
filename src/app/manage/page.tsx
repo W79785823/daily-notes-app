@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { prisma } from '@/lib/db';
 import { isSessionFreshForUser, verifySessionToken } from '@/lib/session';
 import { canCreateAnnouncement, canManagePermissions, canManageUsers } from '@/lib/auth';
+import { tenantDb } from '@/lib/tenant';
 import { ManageHero, ManageSidePanel, MemberManagementPanel, MobileBottomNav, PendingMembers, TeamOverview } from '@/components/manage-panels';
 import { AnnouncementPublishForm } from '@/components/management-forms';
 
@@ -14,8 +15,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   'user.manage.forbidden': '没有权限管理人员。',
   'user.not_found': '人员不存在。',
   'user.self_update.forbidden': '不能在人员与权限里修改自己的角色、权限或启用状态，请至少保留一个管理员账号。',
-  'user.admin_protected.forbidden': '唯一管理员账号受保护，不能在人员与权限里修改。',
-  'user.admin_singleton.forbidden': '系统只保留一个管理员，其他账号请使用普通成员身份。',
+  'user.admin_protected.forbidden': '团队负责人账号受保护，不能在人员与权限里修改。',
+  'user.admin_singleton.forbidden': '每个团队只保留当前负责人为管理员，其他账号请使用普通成员身份。',
+  'user.duplicate.forbidden': '姓名或账号已被占用，请换一个再保存。',
   'permission.manage.forbidden': '没有权限修改角色。',
   'announcement.create.forbidden': '没有权限发布公告。',
   'announcement.delete.forbidden': '没有权限删除公告。',
@@ -24,6 +26,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   'password.reset.validation.failed': '重置密码失败：新密码至少 6 位，且两次输入需要一致。',
   'password.reset.self.forbidden': '不能在成员管理里重置自己的密码，请使用账号设置里的修改密码。',
   'server.error': '操作失败，请稍后重试。',
+  'auth.team_suspended': '团队已停用，请联系平台管理员。',
 };
 
 const OK_MESSAGES: Record<string, string> = {
@@ -42,17 +45,21 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
   const session = verifySessionToken((await cookies()).get('daily_notes_session')?.value);
   if (!session?.userId) redirect('/login?error=auth.required&redirectTo=/manage');
 
-  const currentUser = await prisma.user.findUnique({ where: { id: session.userId } });
+  const currentUser = await prisma.user.findUnique({ where: { id: session.userId }, include: { team: true } });
   if (!currentUser || !currentUser.active || !isSessionFreshForUser(session, currentUser.sessionVersion)) redirect('/login?error=auth.required&redirectTo=/manage');
+  if (currentUser.isSuperAdmin) redirect('/admin');
+  if (currentUser.team && !currentUser.team.active) redirect('/login?error=auth.team_suspended');
+  if (!currentUser.teamId) redirect('/login?error=auth.required&redirectTo=/manage');
+  const db = tenantDb(currentUser.teamId);
 
   const currentUserCanManageUsers = canManageUsers(currentUser);
   const currentUserCanManagePermissions = canManagePermissions(currentUser);
   const currentUserCanCreateAnnouncement = canCreateAnnouncement(currentUser);
 
   const [users, auditLogs, activeTaskCounts] = await Promise.all([
-    prisma.user.findMany({ orderBy: { createdAt: 'asc' } }),
-    prisma.auditLog.findMany({ take: 16, orderBy: { createdAt: 'desc' }, include: { user: true, task: true } }),
-    prisma.task.groupBy({ by: ['assigneeId'], where: { completedAt: null, deletedAt: null }, _count: { _all: true } }),
+    db.user.findMany({ orderBy: { createdAt: 'asc' } }),
+    db.auditLog.findMany({ take: 16, orderBy: { createdAt: 'desc' }, include: { user: true, task: true } }),
+    db.task.groupBy({ by: ['assigneeId'], where: { completedAt: null, deletedAt: null }, _count: { _all: true } }),
   ]);
 
   const activeUsers = users.filter((u) => u.active);

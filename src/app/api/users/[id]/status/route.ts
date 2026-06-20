@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { getRequestUser } from '@/lib/api';
 import { canManagePermissions, canManageUsers, sanitizeAssignablePermissions } from '@/lib/auth';
 import { formError, redirectWithParam } from '@/lib/http';
+import { assertSameTeam, tenantDb } from '@/lib/tenant';
 
 function isFormRequest(request: NextRequest) {
   const contentType = request.headers.get('content-type') || '';
@@ -39,15 +40,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (!canManageUsers(operator)) {
     return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'user.manage.forbidden', jsonMessage: '没有权限管理人员', status: 403 });
   }
+  if (!operator.teamId) {
+    return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'tenant.required', jsonMessage: '超管请使用平台管理台', status: 403 });
+  }
+  const db = tenantDb(operator.teamId);
   const target = await prisma.user.findUnique({ where: { id } });
-  if (!target) {
+  if (!assertSameTeam(target, operator.teamId) || !target) {
     return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'user.not_found', jsonMessage: '人员不存在', status: 404 });
   }
   if (operator.id === target.id) {
     return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'user.self_update.forbidden', jsonMessage: '不能在人员与权限里修改自己的角色、权限或启用状态，请使用我的账号修改密码', status: 400 });
   }
   if (target.role === 'ADMIN') {
-    return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'user.admin_protected.forbidden', jsonMessage: '唯一管理员账号受保护，不能在人员与权限里修改', status: 400 });
+    return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'user.admin_protected.forbidden', jsonMessage: '团队负责人账号受保护，不能在人员与权限里修改', status: 400 });
   }
   const active = payload.data.active !== false;
   const updateData: { active: boolean; name?: string; loginName?: string | null; role?: 'MEMBER'; permissions?: string[] } = { active };
@@ -56,7 +61,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (name) updateData.name = name;
   if (loginName !== undefined) updateData.loginName = loginName || null;
   if (payload.data.role === 'ADMIN') {
-    return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'user.admin_singleton.forbidden', jsonMessage: '系统只保留一个管理员，其他账号请使用普通成员身份', status: 400 });
+    return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'user.admin_singleton.forbidden', jsonMessage: '每个团队只保留当前负责人为管理员，其他账号请使用普通成员身份', status: 400 });
   }
   if (payload.data.role === 'MEMBER' && target.role !== 'MEMBER') {
     if (!canManagePermissions(operator)) {
@@ -66,12 +71,12 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
   if (canManagePermissions(operator) && payload.data.permissions !== undefined) updateData.permissions = sanitizeAssignablePermissions(operator, payload.data.permissions);
   try {
-    const updated = await prisma.user.update({
+    const updated = await db.user.update({
       where: { id },
       data: updateData,
     });
     const action = active ? (target.active ? 'user.update' : 'user.approve') : 'user.disable';
-    await prisma.auditLog.create({
+    await db.auditLog.create({
       data: {
         action,
         userId: operator.id,

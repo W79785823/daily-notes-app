@@ -10,6 +10,24 @@
 
 ## 当前已执行变更
 
+### 20260618090000_multi_tenant
+
+目的：增加多团队 SaaS 地基，包括 `Team`、`Invite`、租户 `teamId`、平台超管标记，并把存量数据回填到「默认团队」。
+
+执行后需要运行：
+
+```bash
+npx prisma generate
+SUPER_ADMIN_LOGIN=你的超管账号 SUPER_ADMIN_PASSWORD=强密码 npm run bootstrap:superadmin
+npm run verify:multi-tenant-db
+```
+
+建议用一次性环境变量执行 `npm run bootstrap:superadmin`，不要把真实超管密码写入 .env 或提交到仓库。
+
+上线前建议先在本地跑 `npm run verify:multi-tenant-db`。该命令会启动临时 PostgreSQL，模拟旧版单租户表结构和存量数据，执行本迁移，并验证注册、邀请、团队隔离、超管停用/恢复入口、超管重置密码和多团队提醒脚本。
+
+注意：`User.teamId` 外键为 `ON DELETE SET NULL`，团队删除会让成员脱离团队。v1 平台超管只支持停用/恢复团队，不提供删除团队入口。
+
 ### 20260512132000_add_user_session_version
 
 目的：用户修改密码或管理员重置密码后，让该用户旧登录态全部失效。

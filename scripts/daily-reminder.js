@@ -88,21 +88,40 @@ function buildDailyReminder({ today, tasks, appUrl, maxItems = 8 }) {
   return lines.join('\n');
 }
 
+function buildTeamDailyReminders({ today, teams, appUrl, maxItems = 8 }) {
+  return teams.map((team) => [
+    `团队：${team.name}`,
+    buildDailyReminder({ today, tasks: team.tasks, appUrl, maxItems }),
+  ].join('\n')).join('\n\n');
+}
+
 async function main() {
-  const tasks = await prisma.task.findMany({
-    where: { deletedAt: null },
-    include: { assignee: true },
-    orderBy: [{ date: 'asc' }, { priority: 'desc' }, { createdAt: 'desc' }],
+  const teams = await prisma.team.findMany({
+    where: { active: true },
+    orderBy: [{ createdAt: 'asc' }],
   });
-  const text = buildDailyReminder({
+  const teamTasks = await Promise.all(teams.map(async (team) => ({
+    id: team.id,
+    name: team.name,
+    tasks: await prisma.task.findMany({
+      where: { deletedAt: null, teamId: team.id },
+      include: { assignee: true },
+      orderBy: [{ date: 'asc' }, { priority: 'desc' }, { createdAt: 'desc' }],
+    }),
+  })));
+  const text = buildTeamDailyReminders({
     today,
-    tasks: tasks.map((task) => ({
-      title: task.title,
-      note: task.note,
-      date: task.date,
-      priority: task.priority,
-      completedAt: task.completedAt ? task.completedAt.toISOString() : null,
-      assigneeName: task.assignee?.name || '未分配',
+    teams: teamTasks.map((team) => ({
+      id: team.id,
+      name: team.name,
+      tasks: team.tasks.map((task) => ({
+        title: task.title,
+        note: task.note,
+        date: task.date,
+        priority: task.priority,
+        completedAt: task.completedAt ? task.completedAt.toISOString() : null,
+        assigneeName: task.assignee?.name || '未分配',
+      })),
     })),
     appUrl,
     maxItems,

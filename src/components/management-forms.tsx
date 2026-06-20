@@ -1,10 +1,11 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 type PermissionOption = { value: string; label: string };
 type PermissionGroup = { title: string; hint: string; values: string[] };
 type UserRow = { id: string; name: string; loginName?: string | null; role: string; active: boolean; permissions: string[] };
+type InviteRow = { id: string; code: string; joinUrl: string; expiresAt?: string | null; maxUses: number; usedCount: number; createdAt?: string };
 
 const permissionGroups: PermissionGroup[] = [
   { title: '事项权限', hint: '控制事项创建、团队事项查看和指派；自己负责的事项默认可完成，自己创建的事项默认可编辑、可删除', values: ['task.create', 'task.assign', 'task.view_all'] },
@@ -28,6 +29,24 @@ type AnnouncementFormProps = {
 
 function readJsonError(payload: any, fallback: string) {
   return String(payload?.error || payload?.message || fallback);
+}
+
+function inviteExpiresAt(value: FormDataEntryValue | null) {
+  const option = String(value || '7d');
+  if (option === 'never') return null;
+  const days = option === '1d' ? 1 : option === '30d' ? 30 : 7;
+  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function inviteStillUsable(invite: InviteRow) {
+  const notUsedUp = invite.usedCount < invite.maxUses;
+  const notExpired = !invite.expiresAt || new Date(invite.expiresAt).getTime() > Date.now();
+  return notUsedUp && notExpired;
+}
+
+function expiryText(invite: InviteRow) {
+  if (!invite.expiresAt) return '永久有效';
+  return `有效至 ${new Date(invite.expiresAt).toLocaleDateString('zh-CN')}`;
 }
 
 export function AnnouncementPublishForm({ className = 'announcementForm toolBody' }: AnnouncementFormProps) {
@@ -126,7 +145,7 @@ export function AddMemberForm({ canManagePermissions, permissions }: AddMemberFo
       <input type="hidden" name="role" value="MEMBER" />
       <div className="roleExplainCard addMemberRoleNote">
         <span>普通成员</span>
-        <small>系统只保留 admin 一个管理员，新成员默认都是普通成员，可按需勾选额外协作权限。</small>
+        <small>每个团队只保留当前负责人为管理员，新成员默认都是普通成员，可按需勾选额外协作权限。</small>
       </div>
       {canManagePermissions && (
         <details className="approvalPermissionBox addMemberPermissionBox">
@@ -137,6 +156,125 @@ export function AddMemberForm({ canManagePermissions, permissions }: AddMemberFo
       {message && <div className="inlineTaskNotice">{message}</div>}
       {error && <div className="inlineTaskNotice error">{error}</div>}
       <button className="fullButton" disabled={busy}>{busy ? '新增中…' : '新增成员'}</button>
+    </form>
+  );
+}
+
+export function InviteMemberForm({ canManagePermissions, permissions }: AddMemberFormProps) {
+  const [busy, setBusy] = useState(false);
+  const [joinUrl, setJoinUrl] = useState('');
+  const [invites, setInvites] = useState<InviteRow[]>([]);
+  const [copied, setCopied] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/invites', { headers: { Accept: 'application/json' } })
+      .then((response) => response.json().then((payload) => ({ response, payload })).catch(() => ({ response, payload: {} })))
+      .then(({ response, payload }) => {
+        if (!active) return;
+        if (!response.ok) throw new Error(readJsonError(payload, '邀请列表加载失败'));
+        setInvites(Array.isArray(payload.invites) ? payload.invites : []);
+      })
+      .catch((err) => {
+        if (active) setError(err instanceof Error ? err.message : '邀请列表加载失败');
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const copyInvite = async (url: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(id);
+      window.setTimeout(() => setCopied((current) => current === id ? '' : current), 1800);
+    } catch {
+      setError('复制失败，请手动选中链接复制。');
+    }
+  };
+
+  const revokeInvite = async (invite: InviteRow) => {
+    if (!window.confirm('确定撤销这条邀请链接吗？撤销后对方将无法继续使用该链接加入。')) return;
+    const response = await fetch(`/api/invites/${invite.code}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      setError(readJsonError(payload, '撤销邀请失败'));
+      return;
+    }
+    setInvites((items) => items.map((item) => item.id === invite.id ? { ...item, usedCount: item.maxUses } : item));
+    setCopied('');
+  };
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (busy) return;
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    setBusy(true);
+    setJoinUrl('');
+    setError('');
+    try {
+      const response = await fetch('/api/invites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          role: 'MEMBER',
+          maxUses: Number(formData.get('maxUses') || 1),
+          expiresAt: inviteExpiresAt(formData.get('expiresIn')),
+          permissions: formData.getAll('permissions').map(String),
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(readJsonError(payload, '邀请创建失败'));
+      setJoinUrl(String(payload.joinUrl || ''));
+      if (payload.invite) setInvites((items) => [{ ...payload.invite, joinUrl: payload.joinUrl }, ...items]);
+      form.reset();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '邀请创建失败，请稍后重试。');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form className="inviteMemberForm" onSubmit={submit}>
+      <label>可用次数<input name="maxUses" type="number" min={1} max={100} defaultValue={1} /></label>
+      <label>有效期<select name="expiresIn" defaultValue="7d"><option value="1d">1 天</option><option value="7d">7 天</option><option value="30d">30 天</option><option value="never">永久</option></select></label>
+      {canManagePermissions && (
+        <details className="approvalPermissionBox addMemberPermissionBox">
+          <summary>邀请成员默认权限</summary>
+          <div className="checks modernChecks">{permissions.map((p) => <label key={p.value}><input type="checkbox" name="permissions" value={p.value} />{p.label}</label>)}</div>
+        </details>
+      )}
+      {joinUrl && (
+        <div className="inviteResultBox">
+          <b>邀请链接</b>
+          <div className="copyRow">
+            <input readOnly value={joinUrl} onFocus={(event) => event.currentTarget.select()} />
+            <button type="button" className="copyInviteButton" onClick={() => copyInvite(joinUrl, 'latest')}>{copied === 'latest' ? '已复制' : '复制'}</button>
+          </div>
+        </div>
+      )}
+      <div className="activeInviteList">
+        <div className="activeInviteHead"><b>有效邀请</b><small>{invites.filter(inviteStillUsable).length} 条可用</small></div>
+        {invites.filter(inviteStillUsable).map((invite) => (
+          <article key={invite.id} className="activeInviteItem">
+            <div>
+              <b>{invite.usedCount} / {invite.maxUses} 已用</b>
+              <small>{expiryText(invite)}</small>
+              <code>{invite.joinUrl}</code>
+            </div>
+            <div className="inviteActions">
+              <button type="button" className="copyInviteButton" onClick={() => copyInvite(invite.joinUrl, invite.id)}>{copied === invite.id ? '已复制' : '复制'}</button>
+              <button type="button" className="revokeInviteButton" onClick={() => revokeInvite(invite)}>撤销</button>
+            </div>
+          </article>
+        ))}
+        {invites.filter(inviteStillUsable).length === 0 && <p className="formHint">暂无有效邀请。生成链接后会显示在这里，方便复制和撤销。</p>}
+      </div>
+      {error && <div className="inlineTaskNotice error">{error}</div>}
+      <button className="fullButton" disabled={busy}>{busy ? '生成中…' : '生成邀请链接'}</button>
     </form>
   );
 }
@@ -154,7 +292,7 @@ export function MemberEditForm({ user, permissions, canManagePermissions, compac
   const [error, setError] = useState('');
   const [active, setActive] = useState(user.active);
   const roleText = user.role === 'ADMIN' ? '管理员' : '成员';
-  const roleHint = user.role === 'ADMIN' ? '管理员默认拥有全部管理能力，请只给核心负责人使用。' : '成员默认只处理自己的事项，可按需追加额外权限。';
+  const roleHint = user.role === 'ADMIN' ? '团队负责人默认拥有全部管理能力。' : '成员默认只处理自己的事项，可按需追加额外权限。';
   const statusText = active ? '已启用' : '已停用';
   const permissionCount = user.permissions.length;
   const grouped = groupedPermissions(permissions);

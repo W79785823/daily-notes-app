@@ -9,8 +9,8 @@ describe('protected admin cannot be changed through management tools', () => {
   it('protects admin rows before normal member update logic', () => {
     expect(panels).toContain("const isProtectedAdmin = user.role === 'ADMIN'");
     expect(panels).toContain('isCurrentUser || isProtectedAdmin');
-    expect(panels).toContain('唯一管理员账号受保护');
-    expect(panels).toContain('系统只保留一个管理员账号');
+    expect(panels).toContain('团队负责人账号受保护');
+    expect(panels).toContain('每个团队只保留当前负责人为管理员');
   });
 
   it('rejects status/role/permission changes against the admin target', () => {
@@ -23,7 +23,7 @@ describe('protected admin cannot be changed through management tools', () => {
   it('rejects password resets against the admin target', () => {
     expect(resetRoute).toContain("target.role === 'ADMIN'");
     expect(resetRoute).toContain('user.admin_protected.forbidden');
-    expect(resetRoute.indexOf("target.role === 'ADMIN'")).toBeLessThan(resetRoute.indexOf('await prisma.user.update'));
+    expect(resetRoute.indexOf("target.role === 'ADMIN'")).toBeLessThan(resetRoute.indexOf('await db.user.update'));
   });
 
   it('converts duplicate-name database errors into a user-facing response', () => {

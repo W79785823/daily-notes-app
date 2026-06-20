@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getRequestUser } from '@/lib/api';
-import { canDeleteAnnouncement, type AuthUser } from '@/lib/auth';
+import { canDeleteAnnouncement } from '@/lib/auth';
 import { formError, redirectWithParam } from '@/lib/http';
+import { assertSameTeam, tenantDb } from '@/lib/tenant';
 
 function isFormRequest(request: NextRequest) {
   const contentType = request.headers.get('content-type') || '';
@@ -40,17 +41,19 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
   return deleteAnnouncement(context, user, '', false);
 }
 
-async function deleteAnnouncement(context: { params: Promise<{ id: string }> }, user: AuthUser, redirectTo: string, isForm: boolean) {
+async function deleteAnnouncement(context: { params: Promise<{ id: string }> }, user: NonNullable<Awaited<ReturnType<typeof getRequestUser>>>, redirectTo: string, isForm: boolean) {
   const { id } = await context.params;
+  if (!user.teamId) return formError({ isForm, redirectTo, errorCode: 'tenant.required', jsonMessage: '超管请使用平台管理台', status: 403 });
+  const db = tenantDb(user.teamId);
   const announcement = await prisma.announcement.findUnique({ where: { id } });
-  if (!announcement || announcement.deletedAt) {
+  if (!assertSameTeam(announcement, user.teamId) || !announcement || announcement.deletedAt) {
     return formError({ isForm, redirectTo, errorCode: 'announcement.not_found', jsonMessage: '公告不存在或已删除', status: 404 });
   }
   if (!canDeleteAnnouncement(user, announcement)) {
     return formError({ isForm, redirectTo, errorCode: 'announcement.delete.forbidden', jsonMessage: '没有权限删除公告', status: 403 });
   }
-  await prisma.announcement.update({ where: { id }, data: { deletedAt: new Date() } });
-  await prisma.auditLog.create({ data: { action: 'announcement.delete', userId: user.id, detail: { announcementId: id, title: announcement.title } } });
+  await db.announcement.update({ where: { id }, data: { deletedAt: new Date() } });
+  await db.auditLog.create({ data: { action: 'announcement.delete', userId: user.id, detail: { announcementId: id, title: announcement.title } } });
   if (isForm) redirectWithParam(redirectTo, 'ok', 'announcement.deleted');
   return NextResponse.json({ ok: true });
 }

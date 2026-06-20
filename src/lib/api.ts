@@ -32,27 +32,25 @@ export const userSchema = z.object({
 export async function getCurrentUser(userId?: string | null) {
   const id = userId || process.env.DEMO_USER_ID;
   if (id) {
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await prisma.user.findUnique({ where: { id }, include: { team: true } });
     if (user) return user;
   }
 
-  return prisma.user.upsert({
-    where: { name: '管理员' },
-    update: {},
-    create: { name: '管理员', role: 'ADMIN', permissions: [], active: true },
-  });
+  return null;
 }
 
 export async function seedIfEmpty() {
   const count = await prisma.user.count();
   if (count > 0) return;
-  const admin = await prisma.user.create({ data: { name: '管理员', loginName: 'admin', passwordHash: hashPassword('admin123'), role: 'ADMIN', permissions: [], active: true } });
-  const zhang = await prisma.user.create({ data: { name: '张三', role: 'MEMBER', permissions: [], active: true } });
-  const li = await prisma.user.create({ data: { name: '李四', role: 'MEMBER', permissions: [], active: true } });
+  const team = await prisma.team.create({ data: { name: '默认团队' } });
+  const admin = await prisma.user.create({ data: { teamId: team.id, name: '管理员', loginName: 'admin', passwordHash: hashPassword('admin123'), role: 'ADMIN', permissions: [], active: true } });
+  await prisma.team.update({ where: { id: team.id }, data: { ownerId: admin.id } });
+  const zhang = await prisma.user.create({ data: { teamId: team.id, name: '张三', role: 'MEMBER', permissions: [], active: true } });
+  const li = await prisma.user.create({ data: { teamId: team.id, name: '李四', role: 'MEMBER', permissions: [], active: true } });
   await prisma.task.createMany({
     data: [
-      { title: '确认今日客户回访清单', note: '示例事项，可编辑删除', date: beijingDateKey(), creatorId: admin.id, assigneeId: zhang.id },
-      { title: '整理明日待办', note: null, date: beijingDateKey(), creatorId: li.id, assigneeId: li.id },
+      { teamId: team.id, title: '确认今日客户回访清单', note: '示例事项，可编辑删除', date: beijingDateKey(), creatorId: admin.id, assigneeId: zhang.id },
+      { teamId: team.id, title: '整理明日待办', note: null, date: beijingDateKey(), creatorId: li.id, assigneeId: li.id },
     ],
   });
 }

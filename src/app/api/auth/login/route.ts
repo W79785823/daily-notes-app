@@ -12,9 +12,9 @@ const loginSchema = z.object({
 });
 
 async function findLoginUser(payload: z.infer<typeof loginSchema>) {
-  const user = await prisma.user.findUnique({ where: { loginName: payload.loginName.trim() } });
+  const user = await prisma.user.findUnique({ where: { loginName: payload.loginName.trim() }, include: { team: true } });
   if (!user || !verifyPassword(payload.password, user.passwordHash)) return null;
-  return prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+  return prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() }, include: { team: true } });
 }
 
 function wantsForm(request: NextRequest) {
@@ -84,11 +84,18 @@ export async function POST(request: NextRequest) {
       }
       return NextResponse.json({ error: '账号或密码不正确，或账号已停用', code: failure.lockedUntil ? 'auth.locked' : 'auth.failed' }, { status: failure.lockedUntil ? 429 : 401 });
     }
+    if (!user.isSuperAdmin && user.team && !user.team.active) {
+      await markLoginFailure(identifier);
+      if (isForm) return NextResponse.redirect(requestUrl(request, '/login?error=auth.team_suspended'), { status: 303 });
+      return NextResponse.json({ error: '团队已停用，请联系平台管理员', code: 'auth.team_suspended' }, { status: 403 });
+    }
 
     await clearLoginFailures(identifier);
     const token = createSessionToken(user.id, user.sessionVersion);
     if (isForm) {
-      const redirectTo = payload.data.redirectTo && payload.data.redirectTo.startsWith('/') ? payload.data.redirectTo : '/';
+      const defaultRedirect = user.isSuperAdmin ? '/admin' : '/';
+      const requestedRedirect = payload.data.redirectTo && payload.data.redirectTo.startsWith('/') ? payload.data.redirectTo : '';
+      const redirectTo = user.isSuperAdmin && (!requestedRedirect || requestedRedirect === '/') ? defaultRedirect : requestedRedirect || defaultRedirect;
       const response = NextResponse.redirect(new URL(redirectTo, requestOrigin(request)), { status: 303 });
       response.cookies.set('daily_notes_session', token, sessionCookieOptions());
       return response;

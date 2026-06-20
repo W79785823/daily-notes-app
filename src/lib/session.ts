@@ -75,7 +75,7 @@ export function userIdFromRequest(request: NextRequest) {
   if (session?.userId) return session.userId;
 
   if (!allowDevUserHeader()) return null;
-  return request.headers.get('x-user-id') || request.nextUrl.searchParams.get('userId') || null;
+  return request.headers.get('x-user-id') || request.nextUrl?.searchParams.get('userId') || null;
 }
 
 export function sessionFromRequest(request: NextRequest) {
@@ -85,16 +85,22 @@ export function sessionFromRequest(request: NextRequest) {
 export async function getRequestUser(request: NextRequest) {
   const session = sessionFromRequest(request);
   if (session?.userId) {
-    const user = await prisma.user.findUnique({ where: { id: session.userId } });
-    if (user?.active && isSessionFreshForUser(session, user.sessionVersion)) return user;
+    const user = await prisma.user.findUnique({ where: { id: session.userId }, include: { team: true } });
+    if (user?.active && isSessionFreshForUser(session, user.sessionVersion)) {
+      if (!user.isSuperAdmin && user.team && !user.team.active) return null;
+      return user;
+    }
     return null;
   }
 
   if (!allowDevUserHeader()) return null;
-  const userId = request.headers.get('x-user-id') || request.nextUrl.searchParams.get('userId') || null;
+  const userId = request.headers.get('x-user-id') || request.nextUrl?.searchParams.get('userId') || null;
   if (userId) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
-    if (user?.active) return user;
+    const user = await prisma.user.findUnique({ where: { id: userId }, include: { team: true } });
+    if (user?.active) {
+      if (!user.isSuperAdmin && user.team && !user.team.active) return null;
+      return user;
+    }
   }
   return null;
 }

@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 15
 
     env:
-      DATABASE_URL: postgresql://ci:ci@localhost:5432/daily_notes?schema=public
+      DATABASE_URL: postgresql://daily_notes:daily_notes_dev@localhost:54329/daily_notes?schema=public
       SESSION_SECRET: ci-session-secret-at-least-32-characters-long
       AUTH_ALLOW_DEV_USER_HEADER: "false"
       NEXT_TELEMETRY_DISABLED: "1"
@@ -43,8 +43,26 @@ jobs:
       - name: Generate Prisma client
         run: npm run db:generate
 
+      - name: Start docker-compose Postgres
+        run: |
+          docker compose up -d postgres
+          for i in {1..30}; do
+            if docker compose exec -T postgres pg_isready -U daily_notes -d daily_notes; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs postgres
+          exit 1
+
+      - name: Push schema to CI database
+        run: npx prisma db push
+
       - name: Run tests
         run: npm test
+
+      - name: Run multi-tenant database verification
+        run: npm run verify:multi-tenant-db
 
       - name: Build
         run: npm run build

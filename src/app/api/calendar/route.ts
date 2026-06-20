@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Priority, Prisma } from '@prisma/client';
-import { prisma } from '@/lib/db';
 import { getRequestUser } from '@/lib/api';
 import { taskVisibilityWhere } from '@/lib/auth';
 import { beijingMonthKey } from '@/lib/beijing-date';
+import { tenantDb } from '@/lib/tenant';
 
 export async function GET(request: NextRequest) {
   const user = await getRequestUser(request);
   if (!user) return NextResponse.json({ error: '请先登录', code: 'auth.unauthorized' }, { status: 401 });
+  if (!user.teamId) return NextResponse.json({ error: '超管请使用平台管理台', code: 'tenant.required' }, { status: 403 });
+  const db = tenantDb(user.teamId);
 
   const monthParam = request.nextUrl.searchParams.get('month') || beijingMonthKey();
   const month = /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : beijingMonthKey();
@@ -25,7 +27,7 @@ export async function GET(request: NextRequest) {
     ...taskVisibilityWhere(user),
   };
 
-  const tasks = await prisma.task.findMany({
+  const tasks = await db.task.findMany({
     where,
     select: { date: true, completedAt: true },
   });

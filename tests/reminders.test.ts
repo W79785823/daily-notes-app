@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDailyReminder, type ReminderTask } from '../src/lib/reminders';
+import { buildDailyReminder, buildTeamDailyReminders, type ReminderTask } from '../src/lib/reminders';
 
 const task = (overrides: Partial<ReminderTask>): ReminderTask => ({
   id: 't1',
@@ -48,5 +48,21 @@ describe('每日提醒内容生成', () => {
     expect(text).toContain('事项5');
     expect(text).not.toContain('事项6');
     expect(text).toContain('还有 3 个待办未展示');
+  });
+
+  it('可以按团队分别生成提醒文本', () => {
+    const text = buildTeamDailyReminders({
+      today: '2026-05-12',
+      appUrl: 'https://m.xwr.me',
+      teams: [
+        { id: 'team-a', name: '团队 A', tasks: [task({ title: 'A 事项' })] },
+        { id: 'team-b', name: '团队 B', tasks: [task({ title: 'B 事项' })] },
+      ],
+    });
+
+    expect(text).toContain('团队：团队 A');
+    expect(text).toContain('A 事项');
+    expect(text).toContain('团队：团队 B');
+    expect(text).toContain('B 事项');
   });
 });

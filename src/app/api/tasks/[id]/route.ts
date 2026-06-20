@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { getRequestUser, taskSchema } from '@/lib/api';
 import { canActOnTask, canAssignTask } from '@/lib/auth';
 import { formError, redirectWithParam, validationError } from '@/lib/http';
+import { assertSameTeam, tenantDb } from '@/lib/tenant';
 
 async function readBody(request: NextRequest) {
   const contentType = request.headers.get('content-type') || '';
@@ -44,8 +45,10 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
 
 async function updateTask(context: { params: Promise<{ id: string }> }, user: NonNullable<Awaited<ReturnType<typeof getRequestUser>>>, redirectTo: string, isForm: boolean, rawData: unknown) {
   const { id } = await context.params;
+  if (!user.teamId) return formError({ isForm, redirectTo, errorCode: 'tenant.required', jsonMessage: '超管请使用平台管理台', status: 403 });
+  const db = tenantDb(user.teamId);
   const task = await prisma.task.findUnique({ where: { id } });
-  if (!task || task.deletedAt) {
+  if (!assertSameTeam(task, user.teamId) || !task || task.deletedAt) {
     return formError({ isForm, redirectTo, errorCode: 'task.not_found', jsonMessage: '事项不存在', status: 404 });
   }
   if (!canActOnTask(user, task, 'edit')) {
@@ -57,9 +60,15 @@ async function updateTask(context: { params: Promise<{ id: string }> }, user: No
   if (data.assigneeId && data.assigneeId !== task.assigneeId && !canAssignTask(user, data.assigneeId)) {
     return formError({ isForm, redirectTo, errorCode: 'task.assign.forbidden', jsonMessage: '没有权限变更负责人', status: 403 });
   }
+  if (data.assigneeId && data.assigneeId !== task.assigneeId) {
+    const assignee = await db.user.findFirst({ where: { id: data.assigneeId, active: true } });
+    if (!assignee) {
+      return formError({ isForm, redirectTo, errorCode: 'task.assignee.not_found', jsonMessage: '负责人不存在或不属于当前团队', status: 404 });
+    }
+  }
   const updateData = { ...data, ...(data.assigneeId ? { teamVisible: data.assigneeId !== user.id } : {}) };
-  const updated = await prisma.task.update({ where: { id }, data: updateData, include: { creator: true, assignee: true, completedBy: true } });
-  await prisma.auditLog.create({ data: { action: 'task.update', userId: user.id, taskId: id, detail: updateData } });
+  const updated = await db.task.update({ where: { id }, data: updateData, include: { creator: true, assignee: true, completedBy: true } });
+  await db.auditLog.create({ data: { action: 'task.update', userId: user.id, taskId: id, detail: updateData } });
   if (isForm) redirectWithParam(redirectTo, 'ok', 'task.updated');
   return NextResponse.json({
     task: {
@@ -75,15 +84,17 @@ async function updateTask(context: { params: Promise<{ id: string }> }, user: No
 
 async function softDelete(context: { params: Promise<{ id: string }> }, user: NonNullable<Awaited<ReturnType<typeof getRequestUser>>>, redirectTo: string, isForm: boolean) {
   const { id } = await context.params;
+  if (!user.teamId) return formError({ isForm, redirectTo, errorCode: 'tenant.required', jsonMessage: '超管请使用平台管理台', status: 403 });
+  const db = tenantDb(user.teamId);
   const task = await prisma.task.findUnique({ where: { id } });
-  if (!task || task.deletedAt) {
+  if (!assertSameTeam(task, user.teamId) || !task || task.deletedAt) {
     return formError({ isForm, redirectTo, errorCode: 'task.not_found', jsonMessage: '事项不存在', status: 404 });
   }
   if (!canActOnTask(user, task, 'delete')) {
     return formError({ isForm, redirectTo, errorCode: 'task.delete.forbidden', jsonMessage: '没有权限删除事项', status: 403 });
   }
-  const deleted = await prisma.task.update({ where: { id }, data: { deletedAt: new Date() } });
-  await prisma.auditLog.create({ data: { action: 'task.delete', userId: user.id, taskId: id } });
+  const deleted = await db.task.update({ where: { id }, data: { deletedAt: new Date() } });
+  await db.auditLog.create({ data: { action: 'task.delete', userId: user.id, taskId: id } });
   if (isForm) redirectWithParam(redirectTo, 'ok', 'task.deleted');
   return NextResponse.json({ task: deleted });
 }

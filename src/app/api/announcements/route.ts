@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/db';
 import { getRequestUser } from '@/lib/api';
 import { canCreateAnnouncement } from '@/lib/auth';
 import { formError, redirectWithParam, validationError } from '@/lib/http';
+import { tenantDb } from '@/lib/tenant';
 
 const announcementSchema = z.object({
   title: z.string().min(1, '标题不能为空').max(60),
@@ -36,7 +36,9 @@ async function readPayload(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const user = await getRequestUser(request);
   if (!user) return NextResponse.json({ error: '请先登录', code: 'auth.unauthorized' }, { status: 401 });
-  const announcements = await prisma.announcement.findMany({
+  if (!user.teamId) return NextResponse.json({ error: '超管请使用平台管理台', code: 'tenant.required' }, { status: 403 });
+  const db = tenantDb(user.teamId);
+  const announcements = await db.announcement.findMany({
     where: { deletedAt: null },
     take: 10,
     orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
@@ -51,16 +53,20 @@ export async function POST(request: NextRequest) {
   if (!user) {
     return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'auth.unauthorized', jsonMessage: '请先登录', status: 401 });
   }
+  if (!user.teamId) {
+    return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'tenant.required', jsonMessage: '超管请使用平台管理台', status: 403 });
+  }
+  const db = tenantDb(user.teamId);
   if (!canCreateAnnouncement(user)) {
     return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'announcement.create.forbidden', jsonMessage: '没有权限发布公告', status: 403 });
   }
   const parsed = announcementSchema.safeParse(payload.data);
   if (!parsed.success) return validationError(payload.isForm, payload.redirectTo, parsed.error);
-  const announcement = await prisma.announcement.create({
-    data: { ...parsed.data, authorId: user.id },
+  const announcement = await db.announcement.create({
+    data: { teamId: user.teamId, ...parsed.data, authorId: user.id },
     include: { author: true },
   });
-  await prisma.auditLog.create({ data: { action: 'announcement.create', userId: user.id, detail: { announcementId: announcement.id, title: announcement.title } } });
+  await db.auditLog.create({ data: { action: 'announcement.create', userId: user.id, detail: { announcementId: announcement.id, title: announcement.title } } });
   if (payload.isForm) redirectWithParam(payload.redirectTo, 'ok', 'announcement.created');
   return NextResponse.json({ announcement }, { status: 201 });
 }

@@ -51,11 +51,41 @@
   box-sizing: border-box;
 }
 .mobileBottomNav { display: none; }
+.teamOnboardingCard {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  border-color: rgba(214,152,72,.22);
+  background:
+    radial-gradient(circle at 92% 8%, rgba(214,152,72,.20), transparent 30%),
+    linear-gradient(135deg, rgba(255,253,248,.94), rgba(237,248,241,.86));
+}
+.teamOnboardingCard h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 24px;
+  letter-spacing: -.04em;
+}
+.teamOnboardingCard p {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+.teamOnboardingCard .fullButton {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  text-decoration: none;
+}
 
 @media (max-width: 900px) {
   .manageGrid { grid-template-columns: 1fr; }
   .manageHero { align-items: flex-start; flex-direction: column; }
   .manageBackButton { align-self: flex-start; }
+  .teamOnboardingCard .fullButton { width: 100%; }
 }
 
 @media (max-width: 680px) {

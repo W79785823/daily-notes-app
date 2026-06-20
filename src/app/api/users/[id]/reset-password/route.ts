@@ -5,6 +5,7 @@ import { getRequestUser } from '@/lib/api';
 import { canManageUsers } from '@/lib/auth';
 import { hashPassword } from '@/lib/password';
 import { formError, redirectWithParam } from '@/lib/http';
+import { assertSameTeam, tenantDb } from '@/lib/tenant';
 
 const resetPasswordSchema = z.object({
   newPassword: z.string().min(6),
@@ -38,6 +39,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (!canManageUsers(operator)) {
     return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'user.manage.forbidden', jsonMessage: '没有权限管理人员', status: 403 });
   }
+  if (!operator.teamId) {
+    return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'tenant.required', jsonMessage: '超管请使用平台管理台', status: 403 });
+  }
+  const db = tenantDb(operator.teamId);
   if (operator.id === id) {
     return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'password.reset.self.forbidden', jsonMessage: '请在账号设置中修改自己的密码', status: 400 });
   }
@@ -46,15 +51,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'password.reset.validation.failed', jsonMessage: '新密码至少 6 位，且两次输入需要一致', status: 400 });
   }
   const target = await prisma.user.findUnique({ where: { id } });
-  if (!target) {
+  if (!assertSameTeam(target, operator.teamId) || !target) {
     return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'user.not_found', jsonMessage: '人员不存在', status: 404 });
   }
   if (target.role === 'ADMIN') {
-    return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'user.admin_protected.forbidden', jsonMessage: '唯一管理员账号受保护，不能在人员与权限里重置密码', status: 400 });
+    return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'user.admin_protected.forbidden', jsonMessage: '团队负责人账号受保护，不能在人员与权限里重置密码', status: 400 });
   }
 
-  await prisma.user.update({ where: { id }, data: { passwordHash: hashPassword(parsed.data.newPassword), sessionVersion: { increment: 1 } } });
-  await prisma.auditLog.create({
+  await db.user.update({ where: { id }, data: { passwordHash: hashPassword(parsed.data.newPassword), sessionVersion: { increment: 1 } } });
+  await db.auditLog.create({
     data: {
       action: 'user.password_reset',
       userId: operator.id,

@@ -21,12 +21,14 @@ enum Priority {
 
 model User {
   id          String   @id @default(cuid())
-  name        String   @unique
+  teamId      String?
+  name        String
   loginName   String?  @unique
   passwordHash String?
   role        Role     @default(MEMBER)
   permissions String[] @default([])
   active      Boolean  @default(true)
+  isSuperAdmin Boolean  @default(false)
   wechatOpenId String?  @unique
   wechatUnionId String?
   lastLoginAt  DateTime?
@@ -34,15 +36,20 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  team Team? @relation(fields: [teamId], references: [id], onDelete: SetNull)
   createdTasks  Task[] @relation("TaskCreator")
   assignedTasks Task[] @relation("TaskAssignee")
   completedTasks Task[] @relation("TaskCompleter")
   auditLogs AuditLog[]
   announcements Announcement[]
+
+  @@unique([teamId, name])
+  @@index([teamId])
 }
 
 model Task {
   id            String    @id @default(cuid())
+  teamId        String
   title         String
   note          String?
   priority      Priority  @default(NORMAL)
@@ -56,11 +63,13 @@ model Task {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  team        Team @relation(fields: [teamId], references: [id], onDelete: Restrict)
   creator     User  @relation("TaskCreator", fields: [creatorId], references: [id])
   assignee    User  @relation("TaskAssignee", fields: [assigneeId], references: [id])
   completedBy User? @relation("TaskCompleter", fields: [completedById], references: [id])
   auditLogs   AuditLog[]
 
+  @@index([teamId])
   @@index([date])
   @@index([priority])
   @@index([assigneeId])
@@ -70,6 +79,7 @@ model Task {
 
 model Announcement {
   id          String   @id @default(cuid())
+  teamId      String
   title       String
   content     String
   pinned      Boolean  @default(false)
@@ -78,8 +88,10 @@ model Announcement {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  team Team @relation(fields: [teamId], references: [id], onDelete: Restrict)
   author User @relation(fields: [authorId], references: [id])
 
+  @@index([teamId])
   @@index([createdAt])
   @@index([pinned])
 }
@@ -98,13 +110,48 @@ model LoginAttempt {
 
 model AuditLog {
   id        String   @id @default(cuid())
+  teamId    String?
   action    String
   detail    Json?
   userId    String
   taskId    String?
   createdAt DateTime @default(now())
 
+  team Team? @relation(fields: [teamId], references: [id], onDelete: SetNull)
   user User @relation(fields: [userId], references: [id])
   task Task? @relation(fields: [taskId], references: [id])
+
+  @@index([teamId])
 }
 
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  ownerId   String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  tasks         Task[]
+  announcements Announcement[]
+  auditLogs     AuditLog[]
+  invites       Invite[]
+}
+
+model Invite {
+  id          String    @id @default(cuid())
+  teamId      String
+  code        String    @unique
+  role        Role      @default(MEMBER)
+  permissions String[]  @default([])
+  expiresAt   DateTime?
+  maxUses     Int       @default(1)
+  usedCount   Int       @default(0)
+  createdById String
+  createdAt   DateTime  @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+}

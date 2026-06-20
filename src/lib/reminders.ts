@@ -7,11 +7,25 @@ export type ReminderTask = {
   priority: ReminderPriority | string;
   assigneeName: string;
   completedAt: string | null;
+  note?: string | null;
 };
 
 type BuildDailyReminderInput = {
   today: string;
   tasks: ReminderTask[];
+  appUrl: string;
+  maxItems?: number;
+};
+
+export type ReminderTeam = {
+  id: string;
+  name: string;
+  tasks: ReminderTask[];
+};
+
+type BuildTeamDailyRemindersInput = {
+  today: string;
+  teams: ReminderTeam[];
   appUrl: string;
   maxItems?: number;
 };
@@ -73,4 +87,11 @@ export function buildDailyReminder({ today, tasks, appUrl, maxItems = 8 }: Build
 
   lines.push('', `打开查看：${appUrl}`);
   return lines.join('\n');
+}
+
+export function buildTeamDailyReminders({ today, teams, appUrl, maxItems = 8 }: BuildTeamDailyRemindersInput) {
+  return teams.map((team) => [
+    `团队：${team.name}`,
+    buildDailyReminder({ today, tasks: team.tasks, appUrl, maxItems }),
+  ].join('\n')).join('\n\n');
 }

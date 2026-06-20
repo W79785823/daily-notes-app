@@ -1,5 +1,5 @@
 import { ALL_PERMISSIONS, type Permission, type Role } from '@/lib/permissions';
-import { AddMemberForm, MemberEditForm, ResetPasswordForm } from '@/components/management-forms';
+import { AddMemberForm, InviteMemberForm, MemberEditForm, ResetPasswordForm } from '@/components/management-forms';
 
 type ManageUser = {
   id: string;
@@ -118,10 +118,10 @@ export function MemberManagementPanel({ users, currentUserId, canManagePermissio
         {users.map((user) => {
           const isCurrentUser = user.id === currentUserId;
           const isProtectedAdmin = user.role === 'ADMIN';
-          const protectedReason = isCurrentUser ? '当前登录账号受保护' : '唯一管理员账号受保护';
+          const protectedReason = isCurrentUser ? '当前登录账号受保护' : '团队负责人账号受保护';
           const protectedCopy = isCurrentUser
-            ? '不能在人员与权限里修改自己的角色、权限或启用状态，避免误把唯一管理员降级后失去管理入口。需要改密码请使用“我的账号”。'
-            : '系统只保留一个管理员账号。管理员不参与普通成员权限调整，避免被误停用或降级。';
+            ? '不能在人员与权限里修改自己的角色、权限或启用状态，避免误把负责人降级后失去管理入口。需要改密码请使用“我的账号”。'
+            : '每个团队只保留当前负责人为管理员。负责人不参与普通成员权限调整，避免被误停用或降级。';
           return (
           <details key={user.id} className={cn('userEditCard modernUserRow memberCollapseCard', !user.active && 'pendingUserRow')}>
             <summary className="memberCollapseSummary">
@@ -162,8 +162,16 @@ export function ManageSidePanel({ canManageUsers, canManagePermissions, auditLog
         <details className="workspaceCard addMemberCard collapsibleToolCard" open>
           <summary className="toolSummary"><span><b>新增成员</b><small>管理员操作</small></span><em>展开</em></summary>
           <div className="toolBody">
+            <div id="member-invites" className="inviteMemberBox">
+              <b>邀请成员</b>
+              <p className="formHint">发链接给对方，对方自己设密码加入。适合远程成员或临时协作。</p>
+              <InviteMemberForm canManagePermissions={canManagePermissions} permissions={permissionOptions} />
+            </div>
+            <div className="directMemberBox">
+              <b>直接新增</b>
+              <p className="formHint">你帮成员设好初始密码，再把账号密码发给他。适合现场 onboarding。</p>
+            </div>
             <AddMemberForm canManagePermissions={canManagePermissions} permissions={permissionOptions} />
-            <p className="formHint">新增后把网址、登录账号和初始密码发给成员。</p>
           </div>
         </details>
       )}

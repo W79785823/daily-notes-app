@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Priority, Prisma } from '@prisma/client';
-import { prisma } from '@/lib/db';
 import { getRequestUser, taskSchema } from '@/lib/api';
 import { canActOnTask, canAssignTask, canCreateTask, taskVisibilityWhere } from '@/lib/auth';
 import { beijingDateKey } from '@/lib/beijing-date';
 import { formError, redirectWithParam, validationError } from '@/lib/http';
+import { tenantDb } from '@/lib/tenant';
 
 function wantsHtml(request: NextRequest) {
   const contentType = request.headers.get('content-type') || '';
@@ -33,6 +33,8 @@ async function readPayload(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const user = await getRequestUser(request);
   if (!user) return NextResponse.json({ error: '请先登录', code: 'auth.unauthorized' }, { status: 401 });
+  if (!user.teamId) return NextResponse.json({ error: '超管请使用平台管理台', code: 'tenant.required' }, { status: 403 });
+  const db = tenantDb(user.teamId);
   const date = request.nextUrl.searchParams.get('date') || beijingDateKey();
   const status = request.nextUrl.searchParams.get('status') || 'all';
   const priorityParam = request.nextUrl.searchParams.get('priority') || 'all';
@@ -50,7 +52,7 @@ export async function GET(request: NextRequest) {
     ...(keyword ? { OR: [{ title: { contains: keyword, mode: 'insensitive' as const } }, { note: { contains: keyword, mode: 'insensitive' as const } }] } : {}),
     ...taskVisibilityWhere(user),
   };
-  const tasks = await prisma.task.findMany({
+  const tasks = await db.task.findMany({
     where,
     include: { creator: true, assignee: true, completedBy: true },
     orderBy: [{ completedAt: 'asc' }, { createdAt: 'desc' }],
@@ -74,6 +76,10 @@ export async function POST(request: NextRequest) {
   if (!user) {
     return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'auth.unauthorized', jsonMessage: '请先登录', status: 401 });
   }
+  if (!user.teamId) {
+    return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'tenant.required', jsonMessage: '超管请使用平台管理台', status: 403 });
+  }
+  const db = tenantDb(user.teamId);
   if (!canCreateTask(user)) {
     return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'task.create.forbidden', jsonMessage: '没有权限创建事项', status: 403 });
   }
@@ -83,11 +89,15 @@ export async function POST(request: NextRequest) {
   if (!canAssignTask(user, data.assigneeId)) {
     return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'task.assign.forbidden', jsonMessage: '没有权限指派给他人', status: 403 });
   }
-  const task = await prisma.task.create({
-    data: { title: data.title, note: data.note || null, priority: data.priority, date: data.date, creatorId: user.id, assigneeId: data.assigneeId, teamVisible: data.assigneeId !== user.id },
+  const assignee = await db.user.findFirst({ where: { id: data.assigneeId, active: true } });
+  if (!assignee) {
+    return formError({ isForm: payload.isForm, redirectTo: payload.redirectTo, errorCode: 'task.assignee.not_found', jsonMessage: '负责人不存在或不属于当前团队', status: 404 });
+  }
+  const task = await db.task.create({
+    data: { teamId: user.teamId, title: data.title, note: data.note || null, priority: data.priority, date: data.date, creatorId: user.id, assigneeId: data.assigneeId, teamVisible: data.assigneeId !== user.id },
     include: { creator: true, assignee: true },
   });
-  await prisma.auditLog.create({ data: { action: 'task.create', userId: user.id, taskId: task.id, detail: { title: task.title } } });
+  await db.auditLog.create({ data: { action: 'task.create', userId: user.id, taskId: task.id, detail: { title: task.title } } });
   if (payload.isForm) redirectWithParam(payload.redirectTo, 'ok', 'task.created');
   return NextResponse.json({
     task: {

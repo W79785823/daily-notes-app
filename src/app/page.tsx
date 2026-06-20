@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { beijingDateKey } from '@/lib/beijing-date';
 import { isSessionFreshForUser, verifySessionToken } from '@/lib/session';
 import { canActOnTask, canCreateAnnouncement, canCreateTask, canDeleteAnnouncement, canManageUsers, taskVisibilityWhere } from '@/lib/auth';
+import { tenantDb } from '@/lib/tenant';
 import { TaskFocusPanel } from '@/components/task-focus-panel';
 import { WorkCalendar } from '@/components/work-calendar';
 import { TaskCreateForm } from '@/components/task-create-form';
@@ -18,8 +19,10 @@ export const dynamic = 'force-dynamic';
 type Params = { date?: string; userId?: string; status?: string; assigneeId?: string; priority?: string; keyword?: string; error?: string; ok?: string; overdue?: string };
 
 const ERROR_MESSAGES: Record<string, string> = {
+  'auth.team_suspended': '团队已停用，请联系平台管理员。',
   'task.create.forbidden': '没有权限创建事项。',
   'task.assign.forbidden': '没有权限指派给他人。',
+  'task.assignee.not_found': '负责人不存在或不属于当前团队。',
   'task.update.forbidden': '没有权限编辑该事项。',
   'task.delete.forbidden': '没有权限删除事项。',
   'task.complete.forbidden': '没有权限完成该事项。',
@@ -64,9 +67,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
   const keyword = (params.keyword || '').trim();
   const overdueMode = params.overdue === '1';
   const todayKey = beijingDateKey();
-  const currentUser = await prisma.user.findUnique({ where: { id: session.userId } });
+  const currentUser = await prisma.user.findUnique({ where: { id: session.userId }, include: { team: true } });
   if (!currentUser || !currentUser.active || !isSessionFreshForUser(session, currentUser.sessionVersion)) redirect('/login?error=auth.required');
-  const users = await prisma.user.findMany({ orderBy: { createdAt: 'asc' } });
+  if (currentUser.isSuperAdmin) redirect('/admin');
+  if (currentUser.team && !currentUser.team.active) redirect('/login?error=auth.team_suspended');
+  if (!currentUser.teamId) redirect('/login?error=auth.required');
+  const db = tenantDb(currentUser.teamId);
+  const users = await db.user.findMany({ orderBy: { createdAt: 'asc' } });
   const activeUsers = users.filter((u) => u.active);
   const assignableUsers = canManageUsers(currentUser) ? activeUsers : activeUsers.filter((u) => u.id === currentUser.id);
   const currentUserCanManageUsers = canManageUsers(currentUser);
@@ -89,17 +96,17 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
   }
 
   const [tasks, allVisibleTasks, monthTasks, announcements] = await Promise.all([
-    prisma.task.findMany({
+    db.task.findMany({
       where: taskWhere,
       include: { creator: true, assignee: true, completedBy: true },
       orderBy: overdueMode ? [{ date: 'asc' }, { priority: 'desc' }, { createdAt: 'desc' }] : [{ completedAt: 'asc' }, { priority: 'desc' }, { createdAt: 'desc' }],
     }),
-    prisma.task.findMany({
+    db.task.findMany({
       where: { date, deletedAt: null, ...taskVisibilityWhere(currentUser) },
       include: { assignee: true },
       orderBy: [{ completedAt: 'asc' }, { priority: 'desc' }, { createdAt: 'desc' }],
     }),
-    prisma.task.findMany({
+    db.task.findMany({
       where: {
         date: { gte: `${date.slice(0, 7)}-01`, lte: `${date.slice(0, 7)}-31` },
         deletedAt: null,
@@ -107,7 +114,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
       },
       select: { date: true, completedAt: true },
     }),
-    prisma.announcement.findMany({
+    db.announcement.findMany({
       where: { deletedAt: null },
       take: 4,
       orderBy: [{ pinned: 'desc' }, { createdAt: 'desc' }],
@@ -118,7 +125,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
   const total = allVisibleTasks.length;
   const done = allVisibleTasks.filter((t) => t.completedAt).length;
   const todo = total - done;
-  const overdueCount = await prisma.task.count({ where: { date: { lt: todayKey }, completedAt: null, deletedAt: null, ...taskVisibilityWhere(currentUser) } });
+  const overdueCount = await db.task.count({ where: { date: { lt: todayKey }, completedAt: null, deletedAt: null, ...taskVisibilityWhere(currentUser) } });
   const completion = total ? Math.round((done / total) * 100) : 0;
   const mine = allVisibleTasks.filter((t) => t.assigneeId === currentUser?.id || t.creatorId === currentUser?.id).length;
   const dayStats = new Map<string, { total: number; done: number }>();
@@ -148,6 +155,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
 
   const errorMessage = params.error ? ERROR_MESSAGES[params.error] || '操作失败，请重试。' : '';
   const okMessage = params.ok ? OK_MESSAGES[params.ok] || '操作成功。' : '';
+  const showTeamOnboarding = currentUserCanManageUsers && users.length <= 1 && allVisibleTasks.length === 0;
 
   return (
     <main className="shell">
@@ -177,6 +185,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
 
       <PwaInstallBanner />
 
+      {showTeamOnboarding && (
+        <section className="workspaceCard teamOnboardingCard">
+          <span className="sectionLabel">下一步</span>
+          <h2>把团队拉进来</h2>
+          <p>现在只有你一个人。先邀请第一位成员，让对方自己设置密码加入；也可以先创建第一条事项。</p>
+          <a className="fullButton" href="/manage#member-invites">邀请第一位成员</a>
+        </section>
+      )}
 
       {canCreateTask(currentUser) && (
         <TaskCreateForm

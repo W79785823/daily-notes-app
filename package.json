@@ -14,6 +14,8 @@
     "backup:db": "bash scripts/backup-database.sh",
     "deploy:prod": "bash scripts/deploy-production.sh",
     "db:generate": "prisma generate",
+    "verify:multi-tenant-db": "tsx scripts/verify-multi-tenant-db.mjs",
+    "bootstrap:superadmin": "node scripts/bootstrap-super-admin.js",
     "reminder:daily": "node scripts/daily-reminder.js"
   },
   "dependencies": {
@@ -23,11 +25,17 @@
     "react-dom": "latest",
     "zod": "latest"
   },
+  "overrides": {
+    "postcss": "^8.5.15"
+  },
   "devDependencies": {
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "embedded-postgres": "^18.4.0-beta.17",
+    "pg": "^8.16.3",
     "prisma": "^6.19.3",
+    "tsx": "^4.21.0",
     "typescript": "latest",
     "vitest": "latest"
   }
