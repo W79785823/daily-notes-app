@@ -1,21 +1,35 @@
 # 每日事项
 
-面向内部团队使用的每日事项协作工具，当前只维护 **Web / 移动 Web / PWA** 版本。
+面向内部团队和小团队使用的每日事项协作工具，当前维护 **Web / 移动 Web / PWA** 版本，已支持多团队 SaaS 模式。
 
 > 说明：微信小程序方向已放弃，仓库不再保留小程序、微信云开发云函数、微信登录/API 复用约定等内容。
 
 ## 已实现
 
+- 团队：自助注册建团队、邀请成员加入、团队数据隔离、平台超管
 - 人员：姓名、角色、启用状态、单独权限数组
 - 角色：成员、管理员（成员能力由管理员单独勾选权限控制）
 - 权限点：`task.create`、`task.assign`、`task.view_all`、`task.edit_all`、`task.delete`、`task.complete_other`、`user.manage`、`permission.manage`
 - 事项：标题、备注、日期、创建人、负责人、完成状态、软删除
 - 认证：账号密码登录、Session Cookie、生产环境关闭开发身份头
-- 页面：移动优先的今日事项、管理中心、账号设置、公告、工作日历
-- 数据库：PostgreSQL + Prisma
-- 部署：Docker Compose / systemd 生产部署脚本
+- 页面：移动优先的今日事项、管理中心、账号设置、公告、工作日历、注册页、加入页、超管台
+- 数据库：PostgreSQL + Prisma，多租户迁移脚本
+- 部署：Docker Compose / systemd 生产部署脚本、迁移验证脚本、超管 bootstrap
 - 提醒：`npm run reminder:daily` 可生成每日/逾期事项提醒文本，后续可接企业微信、Telegram 等通知通道
 - PWA：支持安装到桌面、离线页、桌面应用模式提示和移动端体验优化，说明见 `docs/pwa.md`
+
+## 本次更新（多团队版）
+
+- 完成多团队 SaaS 改造：自助注册建团队、邀请码加入、团队数据隔离。
+- 新增平台超管后台：停用 / 恢复团队、重置成员密码、查看团队列表。
+- 补齐注册、加入、超管页面和对应 API，登录 / 管理页也同步更新了样式和文案。
+- 数据库迁移、超管 bootstrap、验证脚本和生产部署流程都已补齐。
+
+如果想看更细的改动记录，可以继续看：
+
+- `docs/multi-tenant-plan.md`
+- `docs/multi-tenant-fixes.md`
+- `docs/multi-tenant-ux-review.md`
 
 ## 本地运行
 
@@ -49,6 +63,30 @@ docker compose up
 
 - **Ubuntu 服务器直装**：适合你自己管理 Node.js、systemd、Nginx 的场景。
 - **Docker / Docker Compose**：适合快速迁移，PostgreSQL 和 Web 服务由 Compose 统一管理。
+
+### 升级现有生产库到多租户版
+
+如果你已经有旧版生产库，先按这个顺序升级，再重启服务：
+
+```bash
+cd /data/daily-notes-app
+git pull origin main
+sudo systemctl start daily-notes-backup.service
+
+# 直装示例
+psql "$DATABASE_URL" -f prisma/migrations/20260618090000_multi_tenant/migration.sql
+
+# Docker 示例（按实际容器名调整）
+# docker exec -i daily-notes-app-postgres-1 psql -U daily_notes -d daily_notes \
+#   < prisma/migrations/20260618090000_multi_tenant/migration.sql
+
+npx prisma generate
+SUPER_ADMIN_LOGIN=platform-admin SUPER_ADMIN_PASSWORD='强密码' npm run bootstrap:superadmin
+npm run verify:multi-tenant-db
+npm run deploy:prod
+```
+
+> `npm run deploy:prod` 会继续执行测试、构建、生产检查、重启服务和冒烟测试。迁移一定要先做完，再跑部署脚本。
 
 ### 部署前准备
 
@@ -155,6 +193,8 @@ npx prisma db push
 ```bash
 docs/database-migrations.md
 ```
+
+如果你是在升级已有生产库，先执行迁移 SQL，再 `npx prisma generate`、bootstrap 超管、跑验证脚本，不要直接依赖 `db push`。
 
 #### 6. 构建和自检
 
@@ -351,6 +391,8 @@ npm run db:generate
 npx prisma db push
 ```
 
+如果这是旧库升级，请先执行 `prisma/migrations/20260618090000_multi_tenant/migration.sql`，再生成 Prisma 客户端并 bootstrap 超管，不要只靠 `db push`。
+
 #### 6. 验证访问
 
 默认端口：
@@ -390,6 +432,7 @@ docker compose restart web
 npm test
 npm run build
 npm run check:prod
+npm run verify:multi-tenant-db
 ```
 
 如果使用 Docker 且宿主机没有安装 Node.js，可进入容器或临时用 Node 镜像执行检查。
@@ -398,6 +441,7 @@ npm run check:prod
 
 - `.env` 已配置生产数据库和强 `SESSION_SECRET`。
 - `AUTH_ALLOW_DEV_USER_HEADER=false`。
+- 多租户迁移已执行，`SUPER_ADMIN_LOGIN` / `SUPER_ADMIN_PASSWORD` 已 bootstrap。
 - PostgreSQL 数据卷已持久化，不要把生产数据库放在临时容器文件系统里。
 - 如果开放公网访问，建议使用 Nginx + HTTPS。
 - 数据库变更和备份策略见 `docs/database-migrations.md`。
